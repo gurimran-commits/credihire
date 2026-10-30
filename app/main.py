@@ -24,7 +24,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Scam Detection API", version="1.0.0", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
     app.add_middleware(RateLimitMiddleware, limit=settings.rate_limit_per_minute)
-    app.add_middleware(RequestSizeLimitMiddleware, max_bytes=settings.max_request_bytes)
+    app.add_middleware(RequestSizeLimitMiddleware, max_bytes=settings.max_request_bytes, upload_max_bytes=settings.upload_max_bytes)
     app.include_router(router)
     install_error_handlers(app)
     return app

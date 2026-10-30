@@ -12,10 +12,12 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     rate_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
     max_request_bytes: int = Field(default=65_536, ge=1_024, le=1_048_576)
+    upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1_024, le=10 * 1024 * 1024)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     llm_base_url: AnyHttpUrl | None = None
     llm_api_key: str | None = None
     llm_model: str | None = None
+    tesseract_cmd: str | None = None
     rule_engine_factory: str | None = None
 
     @field_validator("cors_origins", mode="before")

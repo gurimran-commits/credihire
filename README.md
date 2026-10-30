@@ -18,6 +18,12 @@ The MVP is intentionally unauthenticated and its endpoints are public. Deploy it
 
 Karan's configured factory must return an object with `analyze(request: ScamAnalysisRequest) -> RuleEngineResult`. `RuleEngineResult` must provide `risk_level` (`low`, `medium`, or `high`), `risk_score` (0–100), `indicators`, and a non-empty `summary`. It may also provide structured `evidence`, a `scam_stage` string, and up to ten safe `recommendations`. Invalid output or engine failures return a safe `503`; the backend never creates risk findings itself.
 
+## File upload analysis
+
+`POST /api/v1/scam/analyze/upload` accepts one multipart form field named `file`. It supports PDF, PNG, JPG, and JPEG files up to 10 MiB, checks extension, declared MIME type, and file signature, limits PDFs to 20 pages, and never persists the upload. PDF text is extracted with `pypdf` first; PDFs without usable text are rendered one page at a time in memory with PyMuPDF and sent to OCR. It returns extracted text plus the existing deterministic analysis response. Unsupported files return `415`; malformed files return `400`; empty, encrypted, page-limit, or text-limit failures return `422`; unavailable OCR or rule-engine integrations return `503`.
+
+Install Python dependencies with `pip install -r requirements.txt`. OCR for PNG/JPEG screenshots and scanned PDFs additionally requires the Tesseract binary on the service host (English data is used, with a 10-second OCR timeout). Set optional `TESSERACT_CMD` to an absolute executable path when it is not on `PATH`. Without that variable, the backend uses `C:\Program Files\Tesseract-OCR\tesseract.exe` when it exists on Windows, then falls back to `tesseract` from `PATH` for Linux/Render compatibility. On Debian/Ubuntu, install `tesseract-ocr`; on Render, include Tesseract in a custom image or build environment before enabling image uploads. If it is unavailable, the API returns a safe `503` and does not invent extracted text.
+
 ## LLM integration
 
 Aditya must configure `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`. The provider must implement OpenAI-compatible `POST /chat/completions` accepting `model` and `messages`, returning `choices[0].message.content`, plus authenticated `GET /models` for readiness. The backend uses a 15-second chat timeout, validates non-empty replies up to 8,000 characters, and returns only safe `503` responses for configuration, provider, or timeout failures. Chat context is in-memory, session-scoped, and limited to six messages; it is not durable across restarts.

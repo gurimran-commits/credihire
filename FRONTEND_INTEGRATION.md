@@ -19,6 +19,7 @@ Use `Content-Type: application/json`; no frontend API key or LLM credential is n
 | `GET` | `${VITE_API_BASE_URL}/health` | Lightweight process health check. | `{"status":"ok"}` |
 | `GET` | `${VITE_API_BASE_URL}/ready` | Integration readiness, without secrets. | `{"status":"ready|degraded","components":{"rule_engine":"ready|unavailable|unconfigured","llm":"ready|unavailable|unconfigured"}}` |
 | `POST` | `${VITE_API_BASE_URL}/scam/analyze` | Deterministic job/task analysis. | `ScamAnalysisResponse` |
+| `POST` | `${VITE_API_BASE_URL}/scam/analyze/upload` | PDF or screenshot extraction plus deterministic analysis. | `UploadAnalysisResponse` |
 | `POST` | `${VITE_API_BASE_URL}/chat/messages` | Scam-awareness chat. | `ChatMessageResponse` |
 
 ### Analyze request
@@ -46,6 +47,21 @@ Use `Content-Type: application/json`; no frontend API key or LLM credential is n
 ```
 
 `message` is required (1–4,000 characters). Save the returned `session_id` and send it on later messages to retain the bounded conversation context. Set `analyze_message` to `true` only when the user explicitly asks to analyze the submitted message. The response contains `session_id`, `message_id`, `reply`, `disclaimer`, and optional `analysis`. `reply` is returned only by the configured LLM service; never substitute a frontend-generated reply.
+
+### Upload request
+
+Use `FormData`; do not set the `Content-Type` header manually because the browser adds the multipart boundary.
+
+```ts
+const form = new FormData();
+form.append("file", selectedFile);
+const response = await fetch(`${apiBase}/scam/analyze/upload`, {
+  method: "POST",
+  body: form,
+});
+```
+
+Accept only `.pdf`, `.png`, `.jpg`, or `.jpeg` in the UI and enforce a 10 MiB client-side limit for early feedback. The backend repeats those checks and returns `415` for unsupported signatures/types, `400` for corrupted files, `422` for empty/encrypted/page-limit/text-limit files, `413` for files over the limit, and `503` when OCR or the rule engine is unavailable. The successful response has `media_type`, `extracted_text`, and `analysis`; render only the returned analysis and never infer a result locally.
 
 ## Loading and errors
 
