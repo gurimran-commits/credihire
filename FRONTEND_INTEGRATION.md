@@ -20,6 +20,7 @@ Use `Content-Type: application/json`; no frontend API key or LLM credential is n
 | `GET` | `${VITE_API_BASE_URL}/ready` | Integration readiness, without secrets. | `{"status":"ready|degraded","components":{"rule_engine":"ready|unavailable|unconfigured","llm":"ready|unavailable|unconfigured"}}` |
 | `POST` | `${VITE_API_BASE_URL}/scam/analyze` | Deterministic job/task analysis. | `ScamAnalysisResponse` |
 | `POST` | `${VITE_API_BASE_URL}/scam/analyze/upload` | PDF or screenshot extraction plus deterministic analysis. | `UploadAnalysisResponse` |
+| `POST` | `${VITE_API_BASE_URL}/url/analyze` | Deterministic recruitment website URL credibility analysis. | `UrlAnalysisResponse` |
 | `POST` | `${VITE_API_BASE_URL}/chat/messages` | Scam-awareness chat. | `ChatMessageResponse` |
 
 ### Analyze request
@@ -32,6 +33,16 @@ Use `Content-Type: application/json`; no frontend API key or LLM credential is n
   "contact_details": "Optional contact"
 }
 ```
+
+### URL Credibility analyze request
+
+```json
+{
+  "url": "https://careers.example.com"
+}
+```
+
+`url` is required (1–2,048 characters). The response returns `analysis_id`, `target_url`, `final_url`, `risk_level`, `risk_score`, `is_redirected`, `redirect_chain`, `ssl_info`, `indicators`, `recommendations`, `summary`, `reputation_status` (`not_checked`), and `disclaimer`. It performs SSRF-safe hop-by-hop redirect verification and TLS socket handshakes without downloading website page content.
 
 `job_text` is required (1–12,000 characters). The other fields are optional. A successful result has `analysis_id`, `risk_level`, `risk_score`, `indicators`, `evidence`, `scam_stage`, `recommendations`, `summary`, and `disclaimer`. These values are supplied only by Karan's configured rule engine; the UI must not infer or display a result if the API returns `503`.
 
