@@ -14,7 +14,7 @@ import {
   Link2
 } from 'lucide-react';
 import { PRESET_EXAMPLES, PRESET_URL_EXAMPLES } from '../data/demoAnalysis.js';
-import { MAX_INPUT_CHARS, MAX_URL_CHARS, validateUploadFile } from '../utils/validation.js';
+import { MAX_INPUT_CHARS, MAX_URL_CHARS, validateUploadFile, shouldSubmitOnEnter } from '../utils/validation.js';
 
 export function JobOfferForm({
   inputMode = 'text',
@@ -58,14 +58,22 @@ export function JobOfferForm({
         onSubmitUrl(urlInput);
       }
     } else {
+      if (!attachedFile && (!inputText || inputText.trim().length === 0)) {
+        return;
+      }
       onSubmit({ text: inputText, file: attachedFile });
     }
   };
 
   const handleKeyDown = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) {
+        return;
+      }
       e.preventDefault();
-      handleSubmit(e);
+      if (shouldSubmitOnEnter(e, { isLoading, inputText, attachedFile })) {
+        handleSubmit(e);
+      }
     }
   };
 

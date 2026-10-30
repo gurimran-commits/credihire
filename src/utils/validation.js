@@ -125,3 +125,23 @@ export function getCurrentFormattedTime() {
   const now = new Date();
   return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+/**
+ * Determines if an Enter key event on the job offer textarea should trigger submission.
+ *
+ * Requirements:
+ * - Enter without Shift triggers submission.
+ * - Shift + Enter inserts a newline normally (does not submit).
+ * - IME composition Enter confirms composition text without submitting.
+ * - Empty or whitespace-only text does not submit (unless a file is attached).
+ * - Does not submit while a request is already loading.
+ */
+export function shouldSubmitOnEnter(e, { isLoading = false, inputText = '', attachedFile = null } = {}) {
+  if (!e || e.key !== 'Enter') return false;
+  if (e.shiftKey) return false;
+  if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229) return false;
+  if (isLoading) return false;
+  if (!attachedFile && (!inputText || typeof inputText !== 'string' || inputText.trim().length === 0)) return false;
+  return true;
+}
+
