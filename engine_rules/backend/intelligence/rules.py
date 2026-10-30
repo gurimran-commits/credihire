@@ -481,7 +481,7 @@ WITHDRAWAL_BLOCK_PATTERNS: List[Pattern[str]] = [
         rf"(?:pay|deposit|transfer|send)\s+"
         rf"(?:(?:{MONEY_REGEX}|(?:(?:clearance|processing|unlock|unfreeze|handling)\s+)?fee(?:\s+of\s+{MONEY_REGEX})?|\d+%\s*(?:(?:tax|gst)\s+)?(?:fee|charges?)?)\s+)?"
         rf"(?:to\s+(?:withdraw|unfreeze|release|cash\s*out|unlock)\s+(?:your\s+)?"
-        rf"(?:funds|balance|earnings|money|wallet|salary))",
+        rf"(?:funds|balance|earnings|money|wallet|salary|withdrawal))",
         re.IGNORECASE,
     ),
     # "Pay clearance fee of ₹2,500", "pay unfreeze fee of ₹1,000"
@@ -684,6 +684,15 @@ def detect_unrealistic_earnings(text: str) -> Optional[IndicatorResult]:
 # ---------------------------------------------------------------------------
 
 URGENCY_PATTERNS: List[Pattern[str]] = [
+    # "If you do not pay within 10 minutes, your earnings will be blocked"
+    re.compile(
+        r"if\s+you\s+do\s+not\s+pay\s+within\s+"
+        r"\d+\s*(?:mins?|minutes?|hours?)\s*,?\s*"
+        r"(?:your\s+)?(?:earnings|funds|balance|withdrawal|account|wallet)"
+        r"\s+(?:will\s+be\s+)?(?:permanently\s+)?"
+        r"(?:blocked|frozen|withheld|forfeited|lost)",
+        re.IGNORECASE,
+    ),
     # "Transfer within 10 minutes or offer expires"
     re.compile(
         rf"(?:transfer|pay|recharge|act|respond|confirm)(?:\s+[\w₹,.-]+){{0,6}}\s+within\s+\d+\s*(?:mins?|minutes?|hours?)\s+"
