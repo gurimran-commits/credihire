@@ -1,0 +1,10 @@
+# Core Scam Intelligence Engine: Python standard library only (zero required external runtime dependencies)
+
+# FastAPI Integration (for running the REST API):
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+# Testing and verification dependencies:
+pytest>=7.4.0
+httpx>=0.24.0
