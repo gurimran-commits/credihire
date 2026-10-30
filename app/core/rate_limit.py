@@ -13,7 +13,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.limit, self.calls, self.lock = limit, defaultdict(deque), Lock()
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path in {"/api/v1/health", "/api/v1/ready"}:
+        if request.url.path == "/api/v1/health":
             return await call_next(request)
         now = time.monotonic()
         client = request.client.host if request.client else "unknown"

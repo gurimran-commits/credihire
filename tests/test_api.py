@@ -7,12 +7,12 @@ from fastapi.testclient import TestClient
 from app.core.config import get_settings
 from app.dependencies import get_chatbot_service, get_scam_service
 from app.main import create_app
-from app.schemas.scam import Indicator, ScamAnalysisResponse
+from app.schemas.scam import Indicator, RuleEngineResult, ScamAnalysisResponse
 
 
 class FakeEngine:
     def analyze(self, _):
-        return ScamAnalysisResponse(analysis_id=uuid4(), risk_level="high", risk_score=80, indicators=[Indicator(code="fee", severity="high", message="Payment requested")], summary="Review required", disclaimer="Test")
+        return RuleEngineResult(risk_level="high", risk_score=80, indicators=[Indicator(code="fee", severity="high", message="Payment requested")], evidence=[{"source": "job_text", "detail": "Payment requested", "indicator_code": "fee"}], scam_stage="payment_request", recommendations=["Do not send money."], summary="Review required")
 
 
 def create_ready_engine():
@@ -83,10 +83,42 @@ def test_analyze_valid_request(client):
     response = client.post("/api/v1/scam/analyze", json={"job_text": "Pay a fee to begin"})
     assert response.status_code == 200
     assert response.json()["risk_score"] == 80
+    assert response.json()["scam_stage"] == "payment_request"
+    assert response.json()["recommendations"] == ["Do not send money."]
 
 
 def test_invalid_request_is_rejected(client):
     response = client.post("/api/v1/scam/analyze", json={"job_text": ""})
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Invalid request"
+    assert response.json()["errors"] == [{"field": "job_text", "message": "String should have at least 1 character", "type": "string_too_short"}]
+
+
+@pytest.mark.parametrize(
+    ("path", "payload"),
+    [
+        ("/api/v1/scam/analyze", {"job_text": "   "}),
+        ("/api/v1/chat/messages", {"message": "   "}),
+        ("/api/v1/scam/analyze", {"job_text": "x" * 12_001}),
+        ("/api/v1/chat/messages", {"message": "x" * 4_001}),
+    ],
+)
+def test_empty_and_oversized_inputs_are_rejected_safely(client, path, payload):
+    response = client.post(path, json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Invalid request"
+    assert "input" not in str(response.json()["errors"])
+
+
+@pytest.mark.parametrize(
+    ("path", "payload"),
+    [
+        ("/api/v1/scam/analyze", {"job_text": 123}),
+        ("/api/v1/chat/messages", {"message": "valid", "unexpected": True}),
+    ],
+)
+def test_invalid_input_types_and_unknown_fields_are_rejected(client, path, payload):
+    response = client.post(path, json=payload)
     assert response.status_code == 422
     assert response.json()["detail"] == "Invalid request"
 
@@ -97,10 +129,28 @@ def test_chat_valid_request(client):
     assert response.json()["reply"] == "Be cautious."
 
 
+def test_openapi_documents_request_examples_and_endpoint_summaries(client):
+    document = client.get("/openapi.json").json()
+    assert document["paths"]["/api/v1/scam/analyze"]["post"]["summary"] == "Analyze a job or task offer"
+    assert document["components"]["schemas"]["ScamAnalysisRequest"]["examples"]
+    assert document["components"]["schemas"]["ChatMessageRequest"]["examples"]
+
+
 def test_unconfigured_integrations_fail_explicitly():
     app = create_app()
     response = TestClient(app).post("/api/v1/chat/messages", json={"message": "hello"})
     assert response.status_code == 503
+
+
+def test_unconfigured_rule_engine_fails_explicitly():
+    response = TestClient(create_app()).post("/api/v1/scam/analyze", json={"job_text": "Review this offer"})
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Scam analysis is unavailable"}
+
+
+def test_application_lifespan_starts_and_stops_cleanly():
+    with TestClient(create_app()) as client:
+        assert client.get("/api/v1/health").json() == {"status": "ok"}
 
 
 @pytest.mark.asyncio

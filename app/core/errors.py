@@ -6,4 +6,8 @@ from fastapi.responses import JSONResponse
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
-        return JSONResponse(status_code=422, content={"detail": "Invalid request", "errors": exc.errors()})
+        errors = [
+            {"field": ".".join(str(part) for part in error["loc"] if part != "body"), "message": error["msg"], "type": error["type"]}
+            for error in exc.errors()
+        ]
+        return JSONResponse(status_code=422, content={"detail": "Invalid request", "errors": errors})

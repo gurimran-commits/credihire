@@ -11,20 +11,22 @@ class LLMClient:
     def __init__(self, settings: Settings, client: httpx.AsyncClient | None = None) -> None:
         self.settings, self.client = settings, client
 
-    async def reply(self, message: str) -> str:
+    async def reply(self, messages: list[dict[str, str]] | str) -> str:
         if not self.settings.llm_configured:
             raise LLMUnavailable("AI service is not configured")
+        if isinstance(messages, str):
+            messages = [{"role": "user", "content": messages}]
         owns_client = self.client is None
         client = self.client or httpx.AsyncClient(timeout=httpx.Timeout(15.0))
         try:
             response = await client.post(
                 f"{str(self.settings.llm_base_url).rstrip('/')}/chat/completions",
                 headers={"Authorization": f"Bearer {self.settings.llm_api_key}"},
-                json={"model": self.settings.llm_model, "messages": [{"role": "user", "content": message}]},
+                json={"model": self.settings.llm_model, "messages": messages},
             )
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"]
-            if not isinstance(content, str) or not content.strip():
+            if not isinstance(content, str) or not content.strip() or len(content.strip()) > 8_000:
                 raise LLMUnavailable("AI service returned an invalid response")
             return content.strip()
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:

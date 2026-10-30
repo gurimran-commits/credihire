@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     rate_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
+    max_request_bytes: int = Field(default=65_536, ge=1_024, le=1_048_576)
     llm_base_url: AnyHttpUrl | None = None
     llm_api_key: str | None = None
     llm_model: str | None = None
@@ -19,6 +20,14 @@ class Settings(BaseSettings):
     @classmethod
     def split_origins(cls, value: object) -> object:
         return value.split(",") if isinstance(value, str) else value
+
+    @field_validator("cors_origins")
+    @classmethod
+    def require_explicit_origins(cls, value: list[str]) -> list[str]:
+        origins = [origin.rstrip("/") for origin in value]
+        if not origins or "*" in origins or any(not origin for origin in origins):
+            raise ValueError("CORS_ORIGINS must contain explicit origins")
+        return origins
 
     @property
     def llm_configured(self) -> bool:

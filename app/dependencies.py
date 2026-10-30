@@ -32,4 +32,4 @@ def rule_engine_readiness_status() -> str:
 
 @lru_cache
 def get_chatbot_service() -> ChatbotService:
-    return ChatbotService(LLMClient(get_settings()))
+    return ChatbotService(LLMClient(get_settings()), get_scam_service())
