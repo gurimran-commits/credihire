@@ -1,0 +1,196 @@
+/* Responsive Breakpoints & Mobile Optimization */
+
+@media (max-width: 1200px) {
+  .orbit-wrapper {
+    width: 950px;
+  }
+  .orbit-badge.top-left { left: 40px; }
+  .orbit-badge.top-right { right: 40px; }
+  .orbit-badge.bottom-left { left: -10px; }
+  .orbit-badge.bottom-right { right: -10px; }
+}
+
+@media (max-width: 992px) {
+  .nav-links-center {
+    display: none;
+  }
+  
+  .orbit-wrapper {
+    display: none; /* Hide decorative orbit on tablet/mobile to keep layout clean */
+  }
+
+  .hero-heading {
+    font-size: 2.6rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    padding: 0 16px;
+  }
+
+  /* Stacking the results columns in logical mobile priority:
+     1. Risk summary & Warning signs
+     2. Recommended actions
+     3. Submitted content
+  */
+  .results-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .column-risk-assessment {
+    order: 1;
+  }
+
+  .column-actions {
+    order: 2;
+  }
+
+  .column-submitted {
+    order: 3;
+  }
+
+  .results-panel-container {
+    padding: 24px 18px;
+  }
+
+  .mountain-left, .mountain-right {
+    opacity: 0.35;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-custom {
+    padding: 12px 0;
+  }
+
+  .brand-mark {
+    font-size: 1.25rem;
+  }
+
+  .btn-nav-cta {
+    padding: 8px 16px;
+    font-size: 0.84rem;
+  }
+
+  .hero-section {
+    padding: 32px 0 16px;
+  }
+
+  .hero-heading {
+    font-size: 2.15rem;
+  }
+
+  .hero-badge-pill {
+    font-size: 0.78rem;
+    padding: 5px 14px;
+  }
+
+  .input-card-glow {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .input-icon-left,
+  .input-icon-left-btn {
+    display: none;
+  }
+
+  .offer-textarea {
+    min-height: 80px;
+  }
+
+  .btn-check-offer {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .trust-indicators-row {
+    gap: 14px;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .results-status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .results-action-btns {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .risk-score-overview-box {
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .risk-circle-wrapper {
+    width: 84px;
+    height: 84px;
+  }
+
+  .score-number {
+    font-size: 1.45rem;
+  }
+
+  .risk-level-heading {
+    font-size: 1.25rem;
+  }
+
+  .recovery-mini-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .btn-recovery-guide {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-heading {
+    font-size: 1.85rem;
+  }
+
+  .demo-chips-container {
+    display: none;
+  }
+
+  .modal-dialog-custom {
+    max-height: 94vh;
+    border-radius: 16px;
+  }
+
+  .modal-header-custom {
+    padding: 16px 18px;
+  }
+
+  .modal-body-custom {
+    padding: 18px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .navbar-custom, .input-card-outer, .trust-indicators-row, .btn-theme-toggle {
+    display: none !important;
+  }
+  .results-panel-container {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+}

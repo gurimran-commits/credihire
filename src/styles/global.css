@@ -1,0 +1,192 @@
+@import './variables.css';
+
+/* Global Reset & Base Styling */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background Atmosphere Layers */
+.app-container {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(ellipse 65% 55% at 50% 12%, rgba(121, 80, 242, 0.16) 0%, rgba(5, 7, 17, 0) 70%),
+    radial-gradient(circle 500px at 85% 80%, rgba(57, 119, 255, 0.08) 0%, rgba(5, 7, 17, 0) 65%),
+    radial-gradient(circle 500px at 15% 85%, rgba(139, 92, 246, 0.10) 0%, rgba(5, 7, 17, 0) 65%);
+}
+
+/* Mountain Terrain Silhouettes on Sides / Bottom (Reference Image Visual) */
+.terrain-backdrop {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 480px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+}
+
+.mountain-left {
+  position: absolute;
+  bottom: -40px;
+  left: -120px;
+  width: 480px;
+  height: 420px;
+  background: radial-gradient(circle at 60% 40%, rgba(121, 80, 242, 0.35) 0%, rgba(13, 20, 36, 0.95) 60%, transparent 80%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mountain-right {
+  position: absolute;
+  bottom: -40px;
+  right: -120px;
+  width: 480px;
+  height: 420px;
+  background: radial-gradient(circle at 40% 40%, rgba(57, 119, 255, 0.35) 0%, rgba(13, 20, 36, 0.95) 60%, transparent 80%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Mountain ridge SVG decoration behind cards */
+.mountain-ridge-svg {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 380px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* Orbital Arc & Floating Floating Badges */
+.orbit-wrapper {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1100px;
+  height: 520px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.orbit-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  box-shadow: 0 0 30px rgba(121, 80, 242, 0.08);
+  transform: rotate(-1deg);
+}
+
+.orbit-badge {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(13, 20, 36, 0.85);
+  border: 1.5px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 20px rgba(121, 80, 242, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4b5fd;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.orbit-badge:hover {
+  transform: translateY(-4px) scale(1.06);
+  border-color: rgba(139, 92, 246, 0.8);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.5);
+}
+
+.orbit-badge.top-left {
+  top: 60px;
+  left: 60px;
+}
+
+.orbit-badge.bottom-left {
+  bottom: 120px;
+  left: 0px;
+}
+
+.orbit-badge.top-right {
+  top: 70px;
+  right: 60px;
+}
+
+.orbit-badge.bottom-right {
+  bottom: 110px;
+  right: 20px;
+}
+
+/* Typography Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 7, 17, 0.4);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.35);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}
+
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}

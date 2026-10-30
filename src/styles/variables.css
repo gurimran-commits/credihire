@@ -1,0 +1,81 @@
+:root {
+  /* Core Color Palette matching Reference Image */
+  --bg-primary: #050711;
+  --bg-secondary: #0a0e1c;
+  --bg-card: #0d1424;
+  --bg-card-translucent: rgba(13, 20, 36, 0.85);
+  --bg-card-hover: #131c30;
+  --bg-inner-box: rgba(16, 24, 44, 0.75);
+  --bg-input: rgba(10, 15, 29, 0.95);
+  --bg-bubble: #1a233a;
+
+  /* Brand Accents & Gradients */
+  --accent-purple: #7950F2;
+  --accent-purple-light: #9d7aff;
+  --accent-blue: #3977FF;
+  --accent-glow: #8B5CF6;
+  --accent-glow-subtle: rgba(139, 92, 246, 0.18);
+  --gradient-brand: linear-gradient(135deg, #7950F2 0%, #3977FF 100%);
+  --gradient-text: linear-gradient(120deg, #9d7aff 0%, #3977FF 100%);
+  --gradient-card-border: linear-gradient(135deg, rgba(139, 92, 246, 0.6) 0%, rgba(57, 119, 255, 0.3) 100%);
+
+  /* Typography Colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #A6B0C5;
+  --text-muted: #64748B;
+  --text-highlight: #FFFFFF;
+
+  /* Borders & Shadows */
+  --border-color: rgba(139, 92, 246, 0.28);
+  --border-glow: rgba(139, 92, 246, 0.65);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --glow-panel: 0 0 35px rgba(121, 80, 242, 0.18), inset 0 0 20px rgba(121, 80, 242, 0.06);
+  --glow-button: 0 0 20px rgba(121, 80, 242, 0.4);
+  --shadow-card: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+
+  /* Risk Status Indicators */
+  --risk-high: #FF4058;
+  --risk-high-text: #FF7582;
+  --risk-high-bg: rgba(255, 64, 88, 0.12);
+  --risk-high-border: rgba(255, 64, 88, 0.3);
+
+  --risk-medium: #FFB547;
+  --risk-medium-text: #FFC978;
+  --risk-medium-bg: rgba(255, 181, 71, 0.12);
+  --risk-medium-border: rgba(255, 181, 71, 0.3);
+
+  --risk-low: #24D18B;
+  --risk-low-text: #50E3A5;
+  --risk-low-bg: rgba(36, 209, 139, 0.12);
+  --risk-low-border: rgba(36, 209, 139, 0.3);
+
+  --risk-insufficient: #94A3B8;
+  --risk-insufficient-bg: rgba(148, 163, 184, 0.12);
+  --risk-insufficient-border: rgba(148, 163, 184, 0.3);
+
+  /* Dimensions & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+/* Light Theme / High-Contrast Variations (Clean accessibility mode) */
+[data-theme="light"] {
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-card: #192238;
+  --bg-card-translucent: rgba(25, 34, 56, 0.92);
+  --bg-card-hover: #22304C;
+  --bg-inner-box: rgba(30, 41, 69, 0.85);
+  --bg-input: #141c2e;
+  --bg-bubble: #283553;
+  --text-primary: #FFFFFF;
+  --text-secondary: #CBD5E1;
+  --border-color: rgba(167, 139, 250, 0.4);
+}
