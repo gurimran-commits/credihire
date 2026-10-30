@@ -129,3 +129,30 @@ export const PRESET_EXAMPLES = [
     text: "Dear Rahul, Thank you for applying for the Frontend Engineer position at Acme Corp. We would like to invite you for a 45-minute technical interview via Google Meet. Please review the role description on our official portal (careers.acme.com) and confirm your availability for next Tuesday. No fees or bank information are ever required."
   }
 ];
+
+export const PRESET_URL_EXAMPLES = [
+  {
+    id: "google-careers",
+    label: "Google Careers (Verified Brand)",
+    type: "safe",
+    url: "https://careers.google.com"
+  },
+  {
+    id: "brand-spoof",
+    label: "Amazon Spoof Portal (.xyz)",
+    type: "high",
+    url: "https://amazon-recruitment-portal.xyz/apply"
+  },
+  {
+    id: "url-shortener",
+    label: "Shortened Portal Link (bit.ly)",
+    type: "medium",
+    url: "https://bit.ly/recruitment-offer-39x"
+  },
+  {
+    id: "insecure-http",
+    label: "Unencrypted HTTP Site",
+    type: "medium",
+    url: "http://recruitment-hiring-desk.net"
+  }
+];

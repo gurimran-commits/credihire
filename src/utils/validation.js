@@ -4,6 +4,7 @@
 
 export const MAX_INPUT_CHARS = 12_000;
 export const MIN_INPUT_CHARS = 10;
+export const MAX_URL_CHARS = 2_048;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 export const SUPPORTED_UPLOAD_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
 
@@ -69,6 +70,51 @@ export function validateJobOfferInput(text, attachedFile = null) {
     error: null,
     warnings: piiWarnings,
     sanitizedText: trimmed
+  };
+}
+
+export function validateUrlInput(rawUrl) {
+  const rawString = typeof rawUrl === 'string' ? rawUrl : '';
+  const trimmed = rawString.trim();
+
+  if (!trimmed) {
+    return {
+      isValid: false,
+      error: 'Please paste a recruitment website URL to analyze.'
+    };
+  }
+
+  if (trimmed.length > MAX_URL_CHARS) {
+    return {
+      isValid: false,
+      error: `URL exceeds the maximum limit of ${MAX_URL_CHARS} characters.`
+    };
+  }
+
+  const colonIdx = trimmed.indexOf(':');
+  const slashIdx = trimmed.indexOf('/');
+  if (colonIdx !== -1 && (slashIdx === -1 || colonIdx < slashIdx)) {
+    const scheme = trimmed.slice(0, colonIdx).toLowerCase();
+    if (scheme !== 'http' && scheme !== 'https') {
+      return {
+        isValid: false,
+        error: 'Only http:// and https:// URLs are supported.'
+      };
+    }
+  }
+
+  // Check for obvious whitespace or control characters
+  if (/\s/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'URL cannot contain spaces.'
+    };
+  }
+
+  return {
+    isValid: true,
+    error: null,
+    sanitizedUrl: trimmed
   };
 }
 

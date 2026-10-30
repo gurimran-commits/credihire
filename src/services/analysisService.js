@@ -1,4 +1,4 @@
-import { validateJobOfferInput } from '../utils/validation.js';
+import { validateJobOfferInput, validateUrlInput } from '../utils/validation.js';
 
 const runtimeApiBase = typeof import.meta !== 'undefined' && import.meta.env
   ? import.meta.env.VITE_API_BASE_URL
@@ -66,6 +66,7 @@ export function normalizeApiResponse(data, submittedText, attachedFile = null) {
 
   return {
     isDemo: false,
+    isUrlAnalysis: false,
     submittedText: data.extracted_text || submittedText,
     attachedFile: attachedFile ? { name: attachedFile.name, size: attachedFile.size, type: attachedFile.type } : null,
     channel: attachedFile ? (attachedFile.type?.startsWith('image/') ? 'screenshot' : 'document') : 'generic',
@@ -83,6 +84,46 @@ export function normalizeApiResponse(data, submittedText, attachedFile = null) {
     scamStage: analysis.scam_stage,
     warningSigns: toWarningSigns(indicators, evidence),
     recommendationSteps: recommendations.map((recommendation, index) => ({ step: index + 1, title: recommendation, description: '' }))
+  };
+}
+
+export function normalizeUrlApiResponse(data) {
+  const indicators = data.indicators || [];
+  const recommendations = data.recommendations || [];
+  const redirectChain = data.redirect_chain || [];
+
+  return {
+    isDemo: false,
+    isUrlAnalysis: true,
+    submittedText: data.target_url,
+    channel: 'url',
+    analysis_id: data.analysis_id,
+    targetUrl: data.target_url,
+    finalUrl: data.final_url,
+    isRedirected: Boolean(data.is_redirected || redirectChain.length > 1),
+    redirectChain,
+    sslInfo: data.ssl_info,
+    riskScore: data.risk_score,
+    riskLevel: data.risk_level,
+    scamStage: data.is_redirected ? 'redirect_gateway' : 'direct_url',
+    reputationStatus: data.reputation_status || 'not_checked',
+    summary: data.summary,
+    disclaimer: data.disclaimer,
+    indicators,
+    warningSigns: indicators.map((ind) => ({
+      id: ind.code,
+      title: ind.code.replace(/_/g, ' ').toUpperCase(),
+      explanation: ind.message,
+      severity: ind.severity,
+      category: ind.category,
+      evidence: `Indicator Category: ${ind.category}`
+    })),
+    recommendations,
+    recommendationSteps: recommendations.map((rec, index) => ({
+      step: index + 1,
+      title: rec,
+      description: ''
+    }))
   };
 }
 
@@ -117,4 +158,22 @@ export async function checkJobOffer(rawText, attachedFile = null, apiBaseUrl) {
     }
   }, false);
   return normalizeApiResponse(data, validation.sanitizedText);
+}
+
+export async function checkUrlCredibility(rawUrl, apiBaseUrl) {
+  const validation = validateUrlInput(rawUrl);
+  if (!validation.isValid) {
+    throw new AnalysisApiError(validation.error);
+  }
+
+  const base = getApiBaseUrl(apiBaseUrl);
+  const data = await requestAnalysis('/url/analyze', {
+    apiBaseUrl: base,
+    fetchOptions: {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ url: validation.sanitizedUrl })
+    }
+  }, false);
+  return normalizeUrlApiResponse(data);
 }

@@ -13,6 +13,7 @@ import { HistoryModal } from './components/HistoryModal';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { useAnalysis } from './hooks/useAnalysis';
 import { Sparkles } from 'lucide-react';
+import { Chatbot } from './components/Chatbot';
 
 function AppContent() {
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
@@ -29,14 +30,20 @@ function AppContent() {
   const {
     result,
     setResult,
+    inputMode,
+    setInputMode,
     inputText,
     setInputText,
+    urlInput,
+    setUrlInput,
     attachedFile,
     setAttachedFile,
     isLoading,
     error,
     analyze,
+    analyzeUrl,
     loadPreset,
+    loadUrlPreset,
     resetToDemo,
     clearInput
   } = useAnalysis();
@@ -77,7 +84,7 @@ function AppContent() {
   }, [isAnyModalOpen]);
 
   const focusInputArea = () => {
-    const el = document.getElementById('job-offer-input');
+    const el = document.getElementById(inputMode === 'url' ? 'url-credibility-input' : 'job-offer-input');
     if (el) {
       el.focus();
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -89,11 +96,20 @@ function AppContent() {
     setIsAuthOpen(true);
   };
 
-  // Perform analysis and auto-save to user history if logged in
+  // Perform text/file analysis and auto-save to user history if logged in
   const handleAnalyze = async (overrideData) => {
     const text = overrideData?.text !== undefined ? overrideData.text : inputText;
     const file = overrideData?.file !== undefined ? overrideData.file : attachedFile;
     const scanData = await analyze(text, file);
+    if (scanData && user) {
+      addScanToHistory(scanData);
+    }
+  };
+
+  // Perform website URL analysis and auto-save to user history if logged in
+  const handleAnalyzeUrl = async (overrideUrl) => {
+    const target = overrideUrl !== undefined ? overrideUrl : urlInput;
+    const scanData = await analyzeUrl(target);
     if (scanData && user) {
       addScanToHistory(scanData);
     }
@@ -107,16 +123,31 @@ function AppContent() {
     }
   };
 
+  const handleLoadUrlPreset = async (preset) => {
+    const scanData = await loadUrlPreset(preset);
+    if (scanData && user) {
+      addScanToHistory(scanData);
+    }
+  };
+
   // Load a scan item from history back into the dashboard
   const handleLoadHistoryItem = (item) => {
-    setInputText(item.text);
-    if (item.attachedFile) {
-      setAttachedFile(item.attachedFile);
+    if (item.channel === 'url') {
+      setInputMode('url');
+      setUrlInput(item.submittedText || item.targetUrl || '');
     } else {
-      setAttachedFile(null);
+      setInputMode('text');
+      setInputText(item.text || item.submittedText || '');
+      if (item.attachedFile) {
+        setAttachedFile(item.attachedFile);
+      } else {
+        setAttachedFile(null);
+      }
     }
     if (item.fullResult) {
       setResult(item.fullResult);
+    } else if (item.channel === 'url') {
+      analyzeUrl(item.submittedText || item.targetUrl);
     } else {
       analyze(item.text, item.attachedFile);
     }
@@ -129,6 +160,7 @@ function AppContent() {
 
   // Trigger file upload from Hero floating badge
   const triggerHeroFileUpload = () => {
+    setInputMode('text');
     focusInputArea();
     const fileInput = document.getElementById('offer-file-upload-input') || document.querySelector('input[type="file"]');
     if (fileInput) {
@@ -142,7 +174,6 @@ function AppContent() {
       <div className="terrain-backdrop" aria-hidden="true">
         <div className="mountain-left"></div>
         <div className="mountain-right"></div>
-        {/* SVG Jagged Mountain Ridges on Sides */}
         <svg
           className="mountain-ridge-svg"
           viewBox="0 0 1440 380"
@@ -150,7 +181,6 @@ function AppContent() {
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
         >
-          {/* Left Dark Mountain Ridge */}
           <path
             d="M-50 380L-50 210L60 160L140 220L210 140L290 200L380 270L460 380H-50Z"
             fill="#060914"
@@ -163,7 +193,6 @@ function AppContent() {
             stroke="rgba(121, 80, 242, 0.25)"
             strokeWidth="1"
           />
-          {/* Right Dark Mountain Ridge */}
           <path
             d="M1490 380L1490 200L1380 150L1300 210L1220 130L1150 190L1060 260L980 380H1490Z"
             fill="#060914"
@@ -200,18 +229,24 @@ function AppContent() {
         {/* Hero Section with clickable file badge */}
         <HeroSection onUploadClick={triggerHeroFileUpload} />
 
-        {/* Job Offer Input Form with clickable file icon trigger */}
+        {/* Job Offer Input Form with Text / URL mode toggle */}
         <div className="container">
           <JobOfferForm
+            inputMode={inputMode}
+            onModeChange={setInputMode}
             inputText={inputText}
             setInputText={setInputText}
+            urlInput={urlInput}
+            setUrlInput={setUrlInput}
             attachedFile={attachedFile}
             setAttachedFile={setAttachedFile}
             onSubmit={handleAnalyze}
+            onSubmitUrl={handleAnalyzeUrl}
             isLoading={isLoading}
             error={error}
             onClear={clearInput}
             onLoadPreset={handleLoadPreset}
+            onLoadUrlPreset={handleLoadUrlPreset}
           />
 
           {/* Privacy & Trust Indicators */}
@@ -267,6 +302,8 @@ function AppContent() {
         isOpen={isSafetyTipsOpen}
         onClose={() => setIsSafetyTipsOpen(false)}
       />
+
+      <Chatbot analysisId={result?.analysis_id} />
 
       {/* Floating Toast Notification */}
       {toastMessage && (

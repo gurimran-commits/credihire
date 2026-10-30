@@ -177,6 +177,11 @@
   .modal-body-custom {
     padding: 18px;
   }
+
+  .credihire-chatbot { right: 12px; bottom: 12px; }
+  .chatbot-panel { width: calc(100vw - 24px); height: min(600px, calc(100vh - 84px)); }
+  .chatbot-launcher span { display: none; }
+  .chatbot-launcher { padding: 13px; }
 }
 
 /* Print Styles */

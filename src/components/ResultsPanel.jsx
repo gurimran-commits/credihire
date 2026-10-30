@@ -1,9 +1,10 @@
 import React from 'react';
-import { LifeBuoy, ArrowRight, RotateCcw, Copy, Check, Sparkles, AlertTriangle } from 'lucide-react';
+import { LifeBuoy, ArrowRight, RotateCcw, Copy, Check, Sparkles, Globe } from 'lucide-react';
 import { SubmittedContent } from './SubmittedContent';
 import { RiskScoreCard } from './RiskScoreCard';
 import { WarningSigns } from './WarningSigns';
 import { RecommendedActions } from './RecommendedActions';
+import { UrlCredibilityCard } from './UrlCredibilityCard';
 
 export function ResultsPanel({
   result,
@@ -33,13 +34,26 @@ export function ResultsPanel({
   };
 
   const handleCopySummary = () => {
-    const summaryText = `CrediHire Analysis Report:
+    let summaryText = '';
+    if (result.isUrlAnalysis) {
+      summaryText = `CrediHire URL Credibility Report:
+Target URL: ${result.targetUrl}
+Final Destination: ${result.finalUrl}
+Risk Level: ${result.riskLevel ? result.riskLevel.toUpperCase() : 'UNKNOWN'} (${result.riskScore}/100)
+Assessment: ${result.summary}
+Indicators:
+${result.indicators?.map(i => `- [${i.severity.toUpperCase()}] ${i.code}: ${i.message}`).join('\n') || 'None'}
+Recommendations:
+${result.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join('\n') || 'None'}`;
+    } else {
+      summaryText = `CrediHire Analysis Report:
 Status: ${result.headline} (${result.riskScore}/100)
 Assessment: ${result.summary}
 Warning Signs:
 ${result.warningSigns?.map(w => `- ${w.title}: ${w.explanation}`).join('\n')}
 Recommendations:
 ${result.recommendations?.map(r => `${r.step || ''}. ${r.title}: ${r.description}`).join('\n')}`;
+    }
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -60,12 +74,12 @@ ${result.recommendations?.map(r => `${r.step || ''}. ${r.title}: ${r.description
   return (
     <div className="container" id="results-section">
       <div className="results-panel-container">
-        {/* Top Status Bar: Clarifies whether looking at Demo Reference or Live User Result */}
+        {/* Top Status Bar */}
         <div className="results-status-bar">
           <div className="d-flex align-items-center gap-2">
             <span className={`results-badge-tag ${result.isDemo ? 'demo-mode' : 'live-mode'}`}>
               <Sparkles size={12} />
-              {result.isDemo ? 'Demonstration Mode (Visual Reference)' : 'Live Analysis Result'}
+              {result.isDemo ? 'Demonstration Mode (Visual Reference)' : (result.isUrlAnalysis ? 'Live URL Credibility Result' : 'Live Analysis Result')}
             </span>
             {result.sourceNotice && (
               <span className="text-white-50 d-none d-md-inline" style={{ fontSize: '0.74rem' }}>
@@ -99,60 +113,64 @@ ${result.recommendations?.map(r => `${r.step || ''}. ${r.title}: ${r.description
           </div>
         </div>
 
-        {/* 3-Column Main Grid */}
-        <div className="results-grid">
-          {/* Column 1: Submitted Content */}
-          <SubmittedContent
-            submittedText={result.submittedText}
-            channel={result.channel}
-            timestamp={result.timestamp}
-            attachedFile={result.attachedFile}
-          />
-
-          {/* Column 2: Risk Assessment & Key Warning Signs */}
-          <div className="column-risk-assessment">
-            <RiskScoreCard
-              riskScore={result.riskScore}
-              riskLevel={result.riskLevel}
-              headline={result.headline}
-              summary={result.summary}
+        {/* Content View: URL Analysis or 3-Column Offer Message Grid */}
+        {result.isUrlAnalysis ? (
+          <UrlCredibilityCard result={result} />
+        ) : (
+          <div className="results-grid">
+            {/* Column 1: Submitted Content */}
+            <SubmittedContent
+              submittedText={result.submittedText}
+              channel={result.channel}
+              timestamp={result.timestamp}
+              attachedFile={result.attachedFile}
             />
 
-            <WarningSigns
-              warningSigns={result.warningSigns}
-              onSelectWarning={onSelectWarning}
-            />
-          </div>
+            {/* Column 2: Risk Assessment & Key Warning Signs */}
+            <div className="column-risk-assessment">
+              <RiskScoreCard
+                riskScore={result.riskScore}
+                riskLevel={result.riskLevel}
+                headline={result.headline}
+                summary={result.summary}
+              />
 
-          {/* Column 3: What You Should Do & Recovery Guide */}
-          <div className="column-actions">
-            <RecommendedActions
-              recommendations={result.recommendationSteps || result.recommendations}
-            />
+              <WarningSigns
+                warningSigns={result.warningSigns}
+                onSelectWarning={onSelectWarning}
+              />
+            </div>
 
-            {/* Already Paid Money Mini-Card */}
-            <div className="recovery-mini-card">
-              <div className="recovery-mini-left">
-                <div className="recovery-icon-circle">
-                  <LifeBuoy size={24} />
+            {/* Column 3: What You Should Do & Recovery Guide */}
+            <div className="column-actions">
+              <RecommendedActions
+                recommendations={result.recommendationSteps || result.recommendations}
+              />
+
+              {/* Already Paid Money Mini-Card */}
+              <div className="recovery-mini-card">
+                <div className="recovery-mini-left">
+                  <div className="recovery-icon-circle">
+                    <LifeBuoy size={24} />
+                  </div>
+                  <div className="recovery-text-wrapper">
+                    <span className="recovery-card-title">Already paid money?</span>
+                    <span className="recovery-card-desc">Get step-by-step help to recover and report.</span>
+                  </div>
                 </div>
-                <div className="recovery-text-wrapper">
-                  <span className="recovery-card-title">Already paid money?</span>
-                  <span className="recovery-card-desc">Get step-by-step help to recover and report.</span>
-                </div>
+
+                <button
+                  type="button"
+                  className="btn-recovery-guide"
+                  onClick={onOpenRecoveryGuide}
+                >
+                  <span>Recovery Guide</span>
+                  <ArrowRight size={14} />
+                </button>
               </div>
-
-              <button
-                type="button"
-                className="btn-recovery-guide"
-                onClick={onOpenRecoveryGuide}
-              >
-                <span>Recovery Guide</span>
-                <ArrowRight size={14} />
-              </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
