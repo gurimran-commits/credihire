@@ -35,6 +35,8 @@ Use `Content-Type: application/json`; no frontend API key or LLM credential is n
 
 `job_text` is required (1–12,000 characters). The other fields are optional. A successful result has `analysis_id`, `risk_level`, `risk_score`, `indicators`, `evidence`, `scam_stage`, `recommendations`, `summary`, and `disclaimer`. These values are supplied only by Karan's configured rule engine; the UI must not infer or display a result if the API returns `503`.
 
+When Groq is configured, the response can additionally include optional `ai_enrichment`. It provides contextual summary, message-grounded evidence, `verification_status` (`not_checked` or `unavailable`), and recommendations. It never changes the deterministic risk score, level, indicators, evidence, or stage. Treat its absence as normal when Groq is unavailable.
+
 ### Chat request
 
 ```json

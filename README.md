@@ -26,7 +26,13 @@ Install Python dependencies with `pip install -r requirements.txt`. OCR for PNG/
 
 ## LLM integration
 
-Aditya must configure `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`. The provider must implement OpenAI-compatible `POST /chat/completions` accepting `model` and `messages`, returning `choices[0].message.content`, plus authenticated `GET /models` for readiness. The backend uses a 15-second chat timeout, validates non-empty replies up to 8,000 characters, and returns only safe `503` responses for configuration, provider, or timeout failures. Chat context is in-memory, session-scoped, and limited to six messages; it is not durable across restarts.
+Configure either `LLM_BASE_URL` with `LLM_API_KEY` and `LLM_MODEL`, or the simpler Groq variables below. The provider must implement OpenAI-compatible `POST /chat/completions` accepting `model` and `messages`, returning `choices[0].message.content`, plus authenticated `GET /models` for readiness. The backend uses a 15-second chat timeout, validates non-empty replies up to 8,000 characters, and returns only safe `503` responses for configuration, provider, or timeout failures. Chat context is in-memory, session-scoped, and limited to six messages; it is not durable across restarts.
+
+## Groq AI integration
+
+Aditya's Groq module is integrated through the existing provider-neutral HTTPX client, so no additional Groq SDK is required. Set `GROQ_API_KEY` only in `.env` or deployment secrets and optionally set `GROQ_MODEL` (default: `openai/gpt-oss-20b`). Groq uses `https://api.groq.com/openai/v1` automatically. When configured, it powers `/api/v1/chat/messages` and may add a validated `ai_enrichment` object to scam-analysis responses.
+
+Karan's engine remains authoritative for `risk_score`, `risk_level`, deterministic indicators, evidence, and `scam_stage`. The optional enrichment contains only contextual summary, message-grounded quoted evidence, `not_checked`/`unavailable` verification status, and recommendations. It never overrides deterministic fields; malformed, unavailable, timed-out, rate-limited, or ungrounded Groq output is omitted while deterministic analysis continues. User content is wrapped as untrusted data, and AI-generated evidence must quote the submitted message exactly.
 
 ## Render deployment
 

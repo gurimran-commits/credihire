@@ -6,7 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.dependencies import get_scam_service
+from app.core.config import get_settings
+from app.dependencies import get_chatbot_service, get_scam_service
 from app.main import create_app
 from app.schemas.scam import ScamAnalysisResponse
 from app.services import upload_extraction
@@ -65,6 +66,25 @@ class FakeScamService:
         self.analyze = Mock(return_value=ScamAnalysisResponse(
             analysis_id="123e4567-e89b-12d3-a456-426614174000", risk_level="high", risk_score=90, indicators=[], summary="Engine result", disclaimer="Test"
         ))
+
+    async def analyze_with_enrichment(self, request):
+        return self.analyze(request)
+
+
+@pytest.fixture(autouse=True)
+def clear_rule_engine_configuration(monkeypatch):
+    from app.core.config import Settings
+    isolated_settings = lambda: Settings(_env_file=None)
+    monkeypatch.setattr("app.main.get_settings", isolated_settings)
+    monkeypatch.setattr("app.dependencies.get_settings", isolated_settings)
+    monkeypatch.setattr("app.api.v1.routes.get_settings", isolated_settings)
+    get_settings.cache_clear()
+    get_scam_service.cache_clear()
+    get_chatbot_service.cache_clear()
+    yield
+    get_settings.cache_clear()
+    get_scam_service.cache_clear()
+    get_chatbot_service.cache_clear()
 
 
 @pytest.fixture

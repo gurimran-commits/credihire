@@ -99,6 +99,13 @@ class TestTaskDepositIndicator(unittest.TestCase):
         self.assertEqual(res.indicator, IndicatorCategory.TASK_DEPOSIT.value)
         self.assertTrue(len(res.evidence) > 0)
 
+    def test_positive_employee_account_refundable_security_amount(self) -> None:
+        text = "To activate your employee account, complete your first task and deposit ₹499 as a refundable security amount."
+        result = classify_scam(text)
+        self.assertIn(IndicatorCategory.TASK_DEPOSIT.value, [item.indicator for item in result.indicators])
+        self.assertEqual(result.risk_score, 70)
+        self.assertEqual(result.risk_level, RiskLevel.HIGH.value)
+
     def test_positive_vip_task_recharge(self) -> None:
         text = "Recharge ₹1,000 for next VIP task to boost your daily commission rate."
         res = detect_task_deposit(text)
@@ -116,6 +123,37 @@ class TestTaskDepositIndicator(unittest.TestCase):
         res = detect_task_deposit(text)
         self.assertIsNotNone(res)
         self.assertEqual(res.indicator, IndicatorCategory.TASK_DEPOSIT.value)
+
+    def test_positive_work_wallet_funding_for_higher_paying_orders(self) -> None:
+        text = (
+            "Your account has been approved for our premium online earning program. "
+            "You can start completing product rating assignments immediately. "
+            "To activate higher-paying orders, first add Rs. 3,500 to your work wallet. "
+            "The amount will remain in your account and you can recover it with commission."
+        )
+        result = classify_scam(text)
+        self.assertIn(IndicatorCategory.TASK_DEPOSIT.value, [item.indicator for item in result.indicators])
+        self.assertEqual(result.scam_stage, ScamStage.TASK_DEPOSIT.value)
+        self.assertEqual(result.risk_score, 70)
+        self.assertEqual(result.risk_level, RiskLevel.HIGH.value)
+
+    def test_positive_wallet_and_activation_variations(self) -> None:
+        for text in (
+            "Fund your account to unlock premium assignments.",
+            "Load money into your wallet to access the next order.",
+            "Add ₹2,000 to activate higher-paying tasks.",
+            "Top up INR 2,000 to your task balance to access premium assignments.",
+        ):
+            with self.subTest(text=text):
+                self.assertIsNotNone(detect_task_deposit(text))
+
+    def test_negative_wallet_warnings_and_no_recharge_requirement(self) -> None:
+        for text in (
+            "Never add money to unlock tasks.",
+            "No wallet recharge is required.",
+        ):
+            with self.subTest(text=text):
+                self.assertIsNone(detect_task_deposit(text))
 
     def test_negative_software_engineering_task(self) -> None:
         text = "You will be assigned feature development tasks and code reviews using Jira."
@@ -1315,6 +1353,82 @@ class TestAuditRegressionFixes(unittest.TestCase):
         for ev in evidence_list:
             self.assertNotIn("Do not pay any fee", ev)
             self.assertNotIn("Your wallet is blocked", ev)
+
+
+class TestRequiredDetectionRegressions(unittest.TestCase):
+    """End-to-end regressions for representative common job-scam wording."""
+
+    def test_one_time_registration_and_profile_verification_fee(self) -> None:
+        cases = (
+            "Before joining, candidates are required to pay Rs. 1,000 as a one-time registration and profile verification fee.",
+            "Pay INR 2,500 as a one-time onboarding and profile verification fee.",
+            "Submit ₹1,000 as a one-time joining fee.",
+        )
+        for text in cases:
+            with self.subTest(text=text):
+                self.assertIn(
+                    IndicatorCategory.UPFRONT_REGISTRATION_FEE.value,
+                    [item.indicator for item in evaluate_rules(text)],
+                )
+                result = classify_scam(text)
+                self.assertEqual(result.scam_stage, ScamStage.REGISTRATION_FEE.value)
+                self.assertEqual(result.risk_score, 55)
+                self.assertEqual(result.risk_level, RiskLevel.MEDIUM.value)
+
+    def test_free_or_not_required_profile_verification_does_not_trigger_fee(self) -> None:
+        for text in (
+            "No registration fee is required before joining.",
+            "Profile verification is free for all applicants.",
+            "Free profile verification and no onboarding fee are required.",
+        ):
+            with self.subTest(text=text):
+                self.assertNotIn(
+                    IndicatorCategory.UPFRONT_REGISTRATION_FEE.value,
+                    [item.indicator for item in evaluate_rules(text)],
+                )
+
+    def test_each_required_indicator_is_detected_by_rules_and_classifier(self) -> None:
+        cases = (
+            ("Before joining, pay Rs. 2,000 to get this work-from-home job.", IndicatorCategory.UPFRONT_REGISTRATION_FEE.value, ScamStage.REGISTRATION_FEE.value, 55),
+            ("Recharge ₹1,000 for the next VIP task.", IndicatorCategory.TASK_DEPOSIT.value, ScamStage.TASK_DEPOSIT.value, 70),
+            ("Pay Rs. 7,500 to release your blocked wallet earnings.", IndicatorCategory.WITHDRAWAL_FEE.value, ScamStage.WITHDRAWAL_BLOCK.value, 75),
+            ("Earn ₹10,000 daily by liking videos online.", IndicatorCategory.UNREALISTIC_EARNINGS.value, ScamStage.JOB_OFFER.value, 35),
+            ("Transfer within 10 minutes or your offer will expire.", IndicatorCategory.URGENCY_PRESSURE.value, ScamStage.JOB_OFFER.value, 25),
+            ("Please share your OTP and UPI PIN.", IndicatorCategory.SENSITIVE_CREDENTIALS.value, ScamStage.JOB_OFFER.value, 65),
+            ("Send a security deposit for the laptop before joining.", IndicatorCategory.ADVANCE_FEE.value, ScamStage.ADVANCE_FEE.value, 50),
+        )
+        for text, indicator, stage, score in cases:
+            with self.subTest(indicator=indicator):
+                self.assertIn(indicator, [item.indicator for item in evaluate_rules(text)])
+                result = classify_scam(text)
+                self.assertEqual(result.scam_stage, stage)
+                self.assertEqual(result.risk_score, score)
+
+    def test_negated_or_benign_examples_do_not_trigger_their_indicator(self) -> None:
+        cases = (
+            ("No registration fee is required before starting work.", IndicatorCategory.UPFRONT_REGISTRATION_FEE.value),
+            ("VIP tasks do not require a recharge or deposit.", IndicatorCategory.TASK_DEPOSIT.value),
+            ("A clearance fee is not required to withdraw your balance.", IndicatorCategory.WITHDRAWAL_FEE.value),
+            ("Earn a market-rate salary for software engineering work.", IndicatorCategory.UNREALISTIC_EARNINGS.value),
+            ("You may review the offer tomorrow; no payment is required.", IndicatorCategory.URGENCY_PRESSURE.value),
+            ("Never share your OTP, UPI PIN, CVV, or banking password.", IndicatorCategory.SENSITIVE_CREDENTIALS.value),
+            ("No security deposit or courier fee is required for the laptop.", IndicatorCategory.ADVANCE_FEE.value),
+        )
+        for text, indicator in cases:
+            with self.subTest(indicator=indicator):
+                self.assertNotIn(indicator, [item.indicator for item in evaluate_rules(text)])
+                self.assertNotIn(indicator, [item.indicator for item in classify_scam(text).indicators])
+
+    def test_new_urgency_wording_compounds_without_changing_weights(self) -> None:
+        result = classify_scam(
+            "Before joining, pay Rs. 2,000 to get this work-from-home job. "
+            "Transfer within 10 minutes or your offer will expire."
+        )
+        self.assertEqual(
+            {item.indicator for item in result.indicators},
+            {IndicatorCategory.UPFRONT_REGISTRATION_FEE.value, IndicatorCategory.URGENCY_PRESSURE.value},
+        )
+        self.assertEqual(result.risk_score, 70)  # 55 + floor(25 * 0.6)
 
 
 if __name__ == "__main__":

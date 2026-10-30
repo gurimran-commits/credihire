@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", enable_decoding=False)
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", enable_decoding=False, env_ignore_empty=True)
 
     app_env: str = "development"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     llm_base_url: AnyHttpUrl | None = None
     llm_api_key: str | None = None
     llm_model: str | None = None
+    groq_api_key: str | None = None
+    groq_model: str = "openai/gpt-oss-20b"
     tesseract_cmd: str | None = None
     rule_engine_factory: str | None = None
 
@@ -35,7 +37,19 @@ class Settings(BaseSettings):
 
     @property
     def llm_configured(self) -> bool:
-        return bool(self.llm_base_url and self.llm_api_key and self.llm_model)
+        return bool(self.groq_api_key or (self.llm_base_url and self.llm_api_key and self.llm_model))
+
+    @property
+    def effective_llm_base_url(self) -> str | None:
+        return "https://api.groq.com/openai/v1" if self.groq_api_key else (str(self.llm_base_url) if self.llm_base_url else None)
+
+    @property
+    def effective_llm_api_key(self) -> str | None:
+        return self.groq_api_key or self.llm_api_key
+
+    @property
+    def effective_llm_model(self) -> str | None:
+        return self.groq_model if self.groq_api_key else self.llm_model
 
 
 @lru_cache

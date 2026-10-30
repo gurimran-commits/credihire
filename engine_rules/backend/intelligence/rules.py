@@ -285,11 +285,32 @@ def _extract_evidence_sentence(text: str, start_idx: int, end_idx: int) -> str:
 
 REGISTRATION_FEE_PATTERNS: List[Pattern[str]] = [
     # "Pay ₹2,000 registration fee", "Deposit 500 joining fee"
+
+    # "Pay ₹4,999 for mandatory online training"
+    # "Must pay ₹2,000 for mandatory training"
+    re.compile(
+        rf"\b(?:must\s+|have\s+to\s+|need\s+to\s+)?"
+        rf"pay\s+(?:{MONEY_REGEX}\s+)"
+        rf"for\s+(?:(?:the|a)\s+)?"
+        rf"(?:mandatory\s+)?(?:online\s+)?"
+        rf"(?:job\s+)?training\b",
+        re.IGNORECASE,
+    ),
+
     re.compile(
         rf"(?:pay|deposit|transfer|send|charge|submit|fee\s+of)\s+(?:a\s+)?"
         rf"(?:{MONEY_REGEX}\s+)?(?:refundable\s+)?"
         rf"(?:registration|onboarding|joining|application|interview|screening|enrollment|documentation|training|verification)\s+"
         rf"(?:fee|charge|deposit|amount|cost)",
+        re.IGNORECASE,
+    ),
+    # "Pay Rs. 1,000 as a one-time registration and profile verification fee"
+    re.compile(
+        rf"(?:pay|deposit|transfer|send|submit)\s+(?:{MONEY_REGEX}\s+)"
+        rf"(?:as\s+(?:a|an)\s+)?(?:one[\s-]time\s+)?"
+        rf"(?:registration|profile\s+verification|onboarding|joining)"
+        rf"(?:\s*(?:and|&|/)\s*(?:registration|profile\s+verification|onboarding|joining|verification)){{0,2}}\s+"
+        rf"(?:fee|charge|deposit|amount|cost)\b",
         re.IGNORECASE,
     ),
     # "registration fee: ₹500", "onboarding fee of Rs 1000"
@@ -303,6 +324,16 @@ REGISTRATION_FEE_PATTERNS: List[Pattern[str]] = [
         rf"(?:pay|transfer|deposit|send)\s+(?:(?:{MONEY_REGEX}|payment|money|fees?)\s+)?"
         rf"(?:to\s+(?:register|enroll|start|onboard|attend\s+interview|get\s+hired|activate\s+(?:your\s+)?(?:account|profile|id|membership))|"
         rf"for\s+(?:(?:the\s+)?(?:starter\s+kit|id\s+card|uniform|badge)|registration|onboarding|training|(?:a\s+|an\s+|the\s+)?(?:job\s+)?interview\s+(?:slot|booking|appointment|seat)))",
+        re.IGNORECASE,
+    ),
+    # "Pay Rs. 2,000 to get this work-from-home job"
+    re.compile(
+        rf"\b(?:pay|deposit|transfer|send)\s+"
+        rf"(?:{MONEY_REGEX}\s+)"
+        rf"to\s+(?:get|obtain|secure|receive|start)\s+"
+        rf"(?:(?:this|a|the)\s+)?"
+        rf"(?:work[\s-]*from[\s-]*home\s+)?"
+        rf"(?:job|employment|position|opportunity)\b",
         re.IGNORECASE,
     ),
     # "a ₹500 joining fee is mandatory", "₹1,000 registration fee is required"
@@ -435,6 +466,41 @@ TASK_DEPOSIT_PATTERNS: List[Pattern[str]] = [
         rf"(?:{MONEY_REGEX}\s+)?(?:recharge|deposit|pay|jama|रिचार्ज|डिपॉजिट|जमा)",
         re.IGNORECASE,
     ),
+    # "To activate higher-paying orders, first add Rs. 3,500 to your work wallet"
+    re.compile(
+        rf"\bto\s+(?:activate|unlock|access)\s+(?:higher[\s-]*paying\s+)?"
+        rf"(?:premium\s+)?(?:tasks?|orders?|assignments?)\b[^.!?\n\u0964\u0965]{{0,80}}?"
+        rf"\b(?:first\s+)?(?:add|top\s*up|fund|load)\s+(?:{MONEY_REGEX}|money|funds)\s+"
+        rf"(?:to|into)\s+(?:your\s+)?(?:work\s+wallet|task\s+balance|wallet|account)\b",
+        re.IGNORECASE,
+    ),
+    # "Fund your account to unlock premium assignments", "load money into your wallet to access the next order"
+    re.compile(
+        rf"\b(?:add|top\s*up|fund|load)\s+(?:{MONEY_REGEX}|money|funds)\s+"
+        rf"(?:to|into)\s+(?:your\s+)?(?:work\s+wallet|task\s+balance|wallet|account)\s+"
+        rf"(?:to\s+)?(?:activate|unlock|access)\s+(?:higher[\s-]*paying\s+)?(?:premium\s+)?"
+        rf"(?:the\s+)?(?:next\s+)?(?:tasks?|orders?|assignments?)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"\bfund\s+(?:your\s+)?account\s+(?:to\s+)?(?:activate|unlock|access)\s+"
+        rf"(?:higher[\s-]*paying\s+)?(?:premium\s+)?(?:the\s+)?(?:tasks?|orders?|assignments?)\b",
+        re.IGNORECASE,
+    ),
+    # "Add Rs. 2,000 to activate higher-paying tasks"
+    re.compile(
+        rf"\b(?:add|top\s*up|fund|load)\s+{MONEY_REGEX}\s+"
+        rf"(?:to\s+)?(?:activate|unlock|access)\s+(?:higher[\s-]*paying\s+)?(?:premium\s+)?"
+        rf"(?:tasks?|orders?|assignments?)\b",
+        re.IGNORECASE,
+    ),
+    # "To activate your employee account, complete your first task and deposit ₹499 as a refundable security amount"
+    re.compile(
+        rf"\b(?:to\s+)?(?:activate|unlock)\s+(?:your\s+)?(?:employee\s+)?account\b"
+        rf"[^.!?\n\u0964\u0965]{{0,100}}?\b(?:pay|deposit|transfer|send)\s+{MONEY_REGEX}\s+"
+        rf"(?:as\s+(?:a\s+)?)?(?:refundable\s+)?(?:security\s+(?:amount|deposit)|activation\s+amount)\b",
+        re.IGNORECASE,
+    ),
 ]
 
 
@@ -543,6 +609,16 @@ WITHDRAWAL_BLOCK_PATTERNS: List[Pattern[str]] = [
     ),
     re.compile(
         rf"(?:निकासी|विड्रॉल|clearance)\s+(?:शुल्क|फीस|tax|charges?)\s+(?:deni\s+hogi|lagegi|bharo|भरें|देनी\s+होगी)",
+        re.IGNORECASE,
+    ),
+        # "Pay Rs. 7,500 to release your blocked wallet earnings"
+    re.compile(
+        rf"\b(?:pay|deposit|transfer|send)\s+"
+        rf"(?:{MONEY_REGEX}\s+)?"
+        rf"to\s+(?:withdraw|unfreeze|release|unlock)\s+"
+        rf"(?:your\s+)?"
+        rf"(?:(?:blocked|frozen|locked|held)\s+)?"
+        rf"(?:funds|balance|earnings|money|wallet|salary|withdrawal)\b",
         re.IGNORECASE,
     ),
 ]
@@ -696,7 +772,14 @@ URGENCY_PATTERNS: List[Pattern[str]] = [
     # "Transfer within 10 minutes or offer expires"
     re.compile(
         rf"(?:transfer|pay|recharge|act|respond|confirm)(?:\s+[\w₹,.-]+){{0,6}}\s+within\s+\d+\s*(?:mins?|minutes?|hours?)\s+"
-        rf"(?:or|otherwise)\s+(?:offer\s+expires|lose|cancelled|forfeited)",
+        rf"(?:or|otherwise)\s+(?:(?:your\s+)?offer\s+(?:will\s+)?expire(?:s)?|lose|cancelled|forfeited)",
+        re.IGNORECASE,
+    ),
+    # "Your offer will be cancelled if you do not pay immediately"
+    re.compile(
+        r"\b(?:your\s+)?offer\s+(?:will\s+be\s+)?cancel(?:led)?\s+"
+        r"(?:if|unless)\s+you\s+(?:do\s+not|don't|fail\s+to)\s+"
+        r"(?:pay|transfer|recharge)\s+(?:immediately|now|at\s+once)\b",
         re.IGNORECASE,
     ),
     # "Only 2 slots left, pay now to confirm"
@@ -854,8 +937,8 @@ ADVANCE_FEE_PATTERNS: List[Pattern[str]] = [
     # "Pay ₹3,000 refundable security deposit for laptop / equipment", "Send ₹500 as a refundable security deposit before joining"
     re.compile(
         rf"(?:pay|deposit|transfer|send)\s+(?:{MONEY_REGEX}\s+)?"
-        rf"(?:as\s+(?:a\s+)?)?(?:refundable\s+)?(?:security\s+deposit|courier\s+charges?|shipping\s+fee|dispatch\s+fee)\s+"
-        rf"(?:for|to\s+receive|before|prior\s+to)\s+(?:laptop|equipment|welcome\s+kit|offer\s+letter|materials|joining|starting|commencing)",
+        rf"(?:as\s+)?(?:a\s+)?(?:refundable\s+)?(?:security\s+deposit|courier\s+charges?|shipping\s+fee|dispatch\s+fee)\s+"
+        rf"(?:for|to\s+receive|before|prior\s+to)\s+(?:the\s+)?(?:laptop|equipment|welcome\s+kit|offer\s+letter|materials|joining|starting|commencing)",
         re.IGNORECASE,
     ),
     # "Pay courier charges in advance"

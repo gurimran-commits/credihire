@@ -90,7 +90,7 @@ def calculate_risk_score(indicators: List[IndicatorResult]) -> Tuple[int, str]:
     return risk_score, risk_level
 
 
-def _determine_scam_stage(indicators: List[IndicatorResult]) -> str:
+def determine_scam_stage(indicators: List[IndicatorResult]) -> str:
     """Classify the scam stage based on detected indicators.
 
     Stage priority follows the progression of task and job-offer scams:
@@ -204,7 +204,7 @@ class ScamClassifier:
         detected_indicators = evaluate_rules(text)
 
         # Step 2: Determine scam stage
-        stage = _determine_scam_stage(detected_indicators)
+        stage = determine_scam_stage(detected_indicators)
 
         # Step 3: Compute deterministic risk score (0-100) and risk level
         risk_score, risk_level = calculate_risk_score(detected_indicators)

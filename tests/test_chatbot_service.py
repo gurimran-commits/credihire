@@ -67,7 +67,7 @@ async def test_llm_timeout_and_missing_configuration_are_unavailable():
         with pytest.raises(LLMUnavailable):
             await LLMClient(Settings(llm_base_url="https://llm.example/v1", llm_api_key="test-key", llm_model="model"), http_client).reply("hello")
     with pytest.raises(LLMUnavailable):
-        await LLMClient(Settings()).reply("hello")
+        await LLMClient(Settings(_env_file=None)).reply("hello")
 
 
 @pytest.mark.asyncio

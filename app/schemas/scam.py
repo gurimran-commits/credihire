@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
+from app.schemas.ai import AIEnrichment
+
 
 class ScamAnalysisRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, json_schema_extra={"examples": [{"job_text": "Remote data-entry role. Pay a registration fee to start.", "job_url": "https://jobs.example.com/data-entry", "company_name": "Example Staffing", "contact_details": "recruiter@example.com"}]})
@@ -17,6 +19,7 @@ class Indicator(BaseModel):
     code: str = Field(min_length=1, max_length=100)
     severity: Literal["low", "medium", "high", "critical"]
     message: str = Field(min_length=1, max_length=500)
+    sources: list[Literal["rule_engine", "groq"]] = Field(default_factory=list, max_length=2)
 
 
 class Evidence(BaseModel):
@@ -56,3 +59,6 @@ class ScamAnalysisResponse(BaseModel):
     recommendations: list[SafeRecommendation] = Field(default_factory=list, max_length=10)
     summary: str = Field(min_length=1, max_length=1_000)
     disclaimer: str = Field(min_length=1, max_length=500)
+    ai_enrichment: AIEnrichment | None = Field(default=None, description="Optional contextual AI guidance that does not change deterministic risk fields.")
+    rule_engine_result: RuleEngineResult | None = Field(default=None, description="Original deterministic assessment before optional evidence-based fusion.")
+    ai_detection_result: AIEnrichment | None = Field(default=None, description="Validated Groq detection result, if available.")

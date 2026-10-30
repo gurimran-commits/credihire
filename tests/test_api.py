@@ -26,6 +26,8 @@ class FakeScamService:
 
     def analyze(self, request): return self.service.analyze(request)
 
+    async def analyze_with_enrichment(self, request): return self.analyze(request)
+
 
 class FakeChatService:
     async def respond(self, request):
@@ -37,7 +39,14 @@ class FakeChatService:
 
 
 @pytest.fixture(autouse=True)
-def clear_settings_cache():
+def clear_settings_cache(monkeypatch):
+    # Local developer .env files must not turn "unconfigured" tests into live engine tests.
+    import os
+    from app.core.config import Settings
+    isolated_settings = lambda: Settings(_env_file=None)
+    monkeypatch.setattr("app.main.get_settings", isolated_settings)
+    monkeypatch.setattr("app.dependencies.get_settings", isolated_settings)
+    monkeypatch.setattr("app.api.v1.routes.get_settings", isolated_settings)
     get_settings.cache_clear()
     get_scam_service.cache_clear()
     get_chatbot_service.cache_clear()
