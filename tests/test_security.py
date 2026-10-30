@@ -81,6 +81,14 @@ def test_provider_error_does_not_leak_internal_details():
     assert response.json() == {"detail": "Chat service is unavailable"}
 
 
+def test_validation_logs_metadata_without_submitted_content(caplog):
+    with caplog.at_level("WARNING", logger="credihire"):
+        response = TestClient(app_with_chat(SafeChatService())).post("/api/v1/chat/messages", json={"message": "", "private_note": "do-not-log"})
+    assert response.status_code == 422
+    assert "request_validation_failed" in caplog.text
+    assert "do-not-log" not in caplog.text
+
+
 @pytest.mark.asyncio
 async def test_chat_context_isolated_by_session():
     class CapturingClient:

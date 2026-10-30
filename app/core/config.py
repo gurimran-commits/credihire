@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,6 +12,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     rate_limit_per_minute: int = Field(default=60, ge=1, le=10_000)
     max_request_bytes: int = Field(default=65_536, ge=1_024, le=1_048_576)
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     llm_base_url: AnyHttpUrl | None = None
     llm_api_key: str | None = None
     llm_model: str | None = None
