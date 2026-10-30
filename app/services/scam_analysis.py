@@ -19,11 +19,11 @@ class RuleEngineFailure(RuntimeError):
 logger = logging.getLogger("credihire.scam_analysis")
 AI_CONFIDENCE_THRESHOLD = 0.7
 SECONDARY_SIGNAL_PATTERNS = (
-    re.compile(r"\b(?:pay|add|top\s*up|fund|load|deposit|recharge|transfer|send)\s+(?:(?:rs\.?|inr|₹)\s*)?(?:\d[\d,]*|money|funds)\b[^.!?\n]{0,80}\b(?:task|order|assignment|wallet|commission|work\s+account|premium)\b", re.I),
+    re.compile(r"\b(?:pay|add|top\s*up|fund|load|deposit|recharge|transfer|send)\s+(?:(?:(?:a\s+)?refundable\s+)?(?:(?:a\s+)?(?:security|activation)\s+(?:amount|deposit)\s+(?:of\s+)?)?)?(?:(?:rs\.?|inr|₹)\s*)?(?:\d[\d,]*|money|funds)\b[^.!?\n]{0,80}\b(?:task|order|assignment|wallet|commission|work\s+account|premium|security\s+amount|security\s+deposit)\b", re.I),
     re.compile(r"\b(?:share|send|provide|enter)\s+(?:your\s+)?(?:otp|upi\s*pin|cvv|banking\s+password|net\s*banking\s+password)\b", re.I),
     re.compile(r"\b(?:wallet|balance|earnings?|withdrawal|payout)\b[^.!?\n]{0,100}\b(?:blocked|frozen|on\s+hold|release|unfreeze)\b[^.!?\n]{0,100}\b(?:pay|fee|charge|tax|clearance)\b", re.I),
-    re.compile(r"\b(?:pay|send|transfer)\b[^.!?\n]{0,60}\b(?:courier|laptop|equipment|security\s+deposit)\b", re.I),
-    re.compile(r"\b(?:job|work|task|assignment|order|account)\b[^.!?\n]{0,100}\b(?:pay|add|deposit|recharge|transfer|send)\s+(?:(?:rs\.?|inr|₹)\s*)?(?:\d[\d,]*|money|funds)\b", re.I),
+    re.compile(r"\b(?:pay|send|transfer|deposit)\b[^.!?\n]{0,60}\b(?:courier|laptop|equipment|security\s+deposit|refundable\s+(?:security\s+)?(?:amount|deposit))\b", re.I),
+    re.compile(r"\b(?:job|work|task|assignment|order|account)\b[^.!?\n]{0,100}\b(?:pay|add|deposit|recharge|transfer|send)\s+(?:(?:(?:a\s+)?refundable\s+)?(?:(?:a\s+)?(?:security|activation)\s+(?:amount|deposit)\s+(?:of\s+)?)?)?(?:(?:rs\.?|inr|₹)\s*)?(?:\d[\d,]*|money|funds)\b", re.I),
 )
 
 

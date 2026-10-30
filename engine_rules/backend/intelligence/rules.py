@@ -494,11 +494,24 @@ TASK_DEPOSIT_PATTERNS: List[Pattern[str]] = [
         rf"(?:tasks?|orders?|assignments?)\b",
         re.IGNORECASE,
     ),
-    # "To activate your employee account, complete your first task and deposit ₹499 as a refundable security amount"
+    # "To activate your employee account, complete your first task and deposit ₹499 as a refundable security amount" / "To activate your account and unlock premium tasks, deposit a refundable ₹499 security amount"
     re.compile(
         rf"\b(?:to\s+)?(?:activate|unlock)\s+(?:your\s+)?(?:employee\s+)?account\b"
-        rf"[^.!?\n\u0964\u0965]{{0,100}}?\b(?:pay|deposit|transfer|send)\s+{MONEY_REGEX}\s+"
-        rf"(?:as\s+(?:a\s+)?)?(?:refundable\s+)?(?:security\s+(?:amount|deposit)|activation\s+amount)\b",
+        rf"[^.!?\n\u0964\u0965]{{0,120}}?\b(?:pay|deposit|transfer|send)\s+"
+        rf"(?:"
+        rf"(?:a\s+)?refundable\s+(?:(?:security|activation)\s+(?:amount|deposit)\s+(?:of\s+)?)?{MONEY_REGEX}"
+        rf"|"
+        rf"(?:a\s+)?(?:security|activation)\s+(?:amount|deposit)\s+(?:of\s+)?{MONEY_REGEX}"
+        rf"|"
+        rf"{MONEY_REGEX}\s+(?:as\s+(?:a\s+)?)?(?:refundable\s+)?(?:security\s+(?:amount|deposit)|activation\s+(?:amount|deposit|fee))\b"
+        rf")",
+        re.IGNORECASE,
+    ),
+    # "deposit a refundable security amount / deposit of ₹499" or "deposit a refundable ₹499 security amount"
+    re.compile(
+        rf"\b(?:pay|deposit|transfer|send)\s+"
+        rf"(?:a\s+)?refundable\s+(?:(?:security|activation)\s+(?:amount|deposit|fee)\s+(?:of\s+)?)?{MONEY_REGEX}\s*"
+        rf"(?:(?:security|activation)\s+(?:amount|deposit|fee))?",
         re.IGNORECASE,
     ),
 ]
@@ -542,10 +555,11 @@ def detect_task_deposit(text: str) -> Optional[IndicatorResult]:
 # ---------------------------------------------------------------------------
 
 WITHDRAWAL_BLOCK_PATTERNS: List[Pattern[str]] = [
-    # "Pay ₹1,000 to withdraw your balance", "pay clearance fee of ₹2,500 to release funds"
+    # "Pay ₹1,000 to withdraw your balance", "pay clearance fee of ₹2,500 to release funds", "Pay a 10% tax clearance fee of ₹4,500 to release your funds"
     re.compile(
         rf"(?:pay|deposit|transfer|send)\s+"
-        rf"(?:(?:{MONEY_REGEX}|(?:(?:clearance|processing|unlock|unfreeze|handling)\s+)?fee(?:\s+of\s+{MONEY_REGEX})?|\d+%\s*(?:(?:tax|gst)\s+)?(?:fee|charges?)?)\s+)?"
+        rf"(?:(?:a|an|the)\s+)?"
+        rf"(?:(?:{MONEY_REGEX}|(?:\d+%\s*(?:tax|gst\s+)?|(?:clearance|processing|unlock|unfreeze|handling|tax|gst)\s+)*fee(?:\s+of\s+{MONEY_REGEX})?|\d+%\s*(?:(?:tax|gst)\s+)?(?:fee|charges?)?(?:\s+of\s+{MONEY_REGEX})?)\s+)?"
         rf"(?:to\s+(?:withdraw|unfreeze|release|cash\s*out|unlock)\s+(?:your\s+)?"
         rf"(?:funds|balance|earnings|money|wallet|salary|withdrawal))",
         re.IGNORECASE,
@@ -688,6 +702,14 @@ UNREALISTIC_EARNINGS_PATTERNS: List[Pattern[str]] = [
         rf"(?:and|to)?\s*(?:earn|make)\s+{MONEY_REGEX}",
         re.IGNORECASE,
     ),
+    # "Earn ₹5,000 daily with just 30 minutes of work"
+    re.compile(
+        rf"(?:earn|make|get)\s+{MONEY_REGEX}(?:\s*(?:-|to)\s*{MONEY_REGEX})?\s*"
+        rf"(?:per\s+day|daily|every\s+day|per\s+month|monthly)?\s*"
+        rf"(?:with|for|in|spending|working)\s+(?:just\s+|only\s+)?\d+[\s-]*(?:to|-)?\s*\d*\s*(?:mins?|minutes?|hours?)\b"
+        rf"(?:\s+(?:of\s+)?(?:work|daily))?",
+        re.IGNORECASE,
+    ),
     # "Guaranteed daily payout of ₹3000 to your UPI / instant payout"
     re.compile(
         rf"(?:guaranteed|instant)\s+(?:daily|hourly)\s+(?:payout|returns?|income|profit)\s+"
@@ -786,6 +808,17 @@ URGENCY_PATTERNS: List[Pattern[str]] = [
     re.compile(
         rf"(?:only|just)\s+\d+\s*(?:slots?|seats?|vacancies|openings?)\s+(?:left|remaining)\b.*?"
         rf"(?:pay|transfer|recharge|book|lock|grab)\s+now",
+        re.IGNORECASE,
+    ),
+    # "Only 10 positions are available", "Hurry! Only 5 slots remaining"
+    re.compile(
+        r"\b(?:hurry\b[^.!?\n\u0964\u0965]{0,30}?)?(?:only|just)\s+\d+\s*(?:slots?|seats?|vacancies|openings?|positions?)\s+"
+        r"(?:(?:are\s+)?(?:available|open)|left|remaining)\b",
+        re.IGNORECASE,
+    ),
+    # "Send your payment screenshot to the recruiter to start earning immediately"
+    re.compile(
+        r"\b(?:send|submit|share|upload)\s+(?:your\s+)?(?:payment\s+)?screenshot\b[^.!?\n\u0964\u0965]{0,60}?\b(?:immediately|right\s+now|now|at\s+once|urgently)\b",
         re.IGNORECASE,
     ),
     # "Offer valid for next 15 minutes only"
