@@ -1,108 +1,120 @@
-/**
- * Primary Analysis Service
- * Bridges user input with remote API or local heuristic detection engine.
- */
-
-import { analyzeJobOfferLocally } from './mockAnalysisService.js';
 import { validateJobOfferInput } from '../utils/validation.js';
 
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_API_BASE_URL : undefined;
+const runtimeApiBase = typeof import.meta !== 'undefined' && import.meta.env
+  ? import.meta.env.VITE_API_BASE_URL
+  : undefined;
 
-export async function checkJobOffer(rawText, attachedFile = null) {
-  // 1. Client-Side Validation
-  const validation = validateJobOfferInput(rawText, attachedFile);
-  if (!validation.isValid) {
-    throw new Error(validation.error);
+export class AnalysisApiError extends Error {
+  constructor(message, status = null) {
+    super(message);
+    this.name = 'AnalysisApiError';
+    this.status = status;
   }
-
-  const sanitizedText = validation.sanitizedText;
-
-  // 2. Check if a real remote API backend is configured
-  if (API_BASE_URL && API_BASE_URL.trim() !== '') {
-    try {
-      const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/analyze`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          text: sanitizedText,
-          attachedFile: attachedFile ? {
-            name: attachedFile.name,
-            size: attachedFile.size,
-            type: attachedFile.type
-          } : null
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Analysis service responded with status: ${response.status}`);
-      }
-
-      const rawData = await response.json();
-      return normalizeApiResponse(rawData, sanitizedText, attachedFile);
-    } catch (apiError) {
-      console.warn("Remote analysis service unavailable; using local heuristic analyzer:", apiError.message);
-      // Explicit error notification or fallback with disclosure
-      const localResult = analyzeJobOfferLocally(sanitizedText, attachedFile);
-      localResult.sourceNotice = "Analysis completed via local heuristic security engine (Remote API unreachable).";
-      return localResult;
-    }
-  }
-
-  // 3. Fallback: Local Client-Side Heuristic Engine
-  // Simulate standard network latency for realistic evaluation experience (650ms)
-  await new Promise(resolve => setTimeout(resolve, 650));
-  return analyzeJobOfferLocally(sanitizedText, attachedFile);
 }
 
-/**
- * Normalizes remote backend responses into standard CrediHire state structure
- */
-function normalizeApiResponse(data, submittedText, attachedFile = null) {
+function getApiBaseUrl(apiBaseUrl = runtimeApiBase) {
+  if (!apiBaseUrl || !apiBaseUrl.trim()) {
+    throw new AnalysisApiError('Analysis service is not configured. Set VITE_API_BASE_URL and try again.');
+  }
+  return apiBaseUrl.replace(/\/$/, '');
+}
+
+function errorMessage(status, payload, isUpload) {
+  if (status === 413) return isUpload ? 'This file exceeds the 10 MiB upload limit.' : 'This request is too large. Please shorten the text and try again.';
+  if (status === 415) return 'Only PDF, PNG, JPG, and JPEG files are supported.';
+  if (status === 422) return payload?.detail || 'Please correct the submitted content and try again.';
+  if (status === 429) return 'Too many requests. Please wait a moment before trying again.';
+  if (status === 503) return 'Analysis is temporarily unavailable. Please try again later.';
+  return payload?.detail || 'Analysis could not be completed. Please try again.';
+}
+
+async function requestAnalysis(path, options, isUpload) {
+  let response;
+  try {
+    response = await fetch(`${getApiBaseUrl(options.apiBaseUrl)}${path}`, options.fetchOptions);
+  } catch {
+    throw new AnalysisApiError('Unable to connect to the analysis service. Check your connection and try again.');
+  }
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    // Keep the public error safe if a proxy returns a non-JSON response.
+  }
+  if (!response.ok) {
+    throw new AnalysisApiError(errorMessage(response.status, payload, isUpload), response.status);
+  }
+  return payload;
+}
+
+function toWarningSigns(indicators, evidence) {
+  return indicators.map((indicator) => ({
+    id: indicator.code,
+    title: indicator.code,
+    explanation: indicator.message,
+    severity: indicator.severity,
+    evidence: evidence.find((item) => item.indicator_code === indicator.code)?.detail || ''
+  }));
+}
+
+export function normalizeApiResponse(data, submittedText, attachedFile = null) {
+  const analysis = data.analysis || data;
+  const indicators = analysis.indicators || [];
+  const evidence = analysis.evidence || [];
+  const recommendations = analysis.recommendations || [];
+
   return {
     isDemo: false,
-    submittedText: submittedText,
-    attachedFile: attachedFile ? {
-      name: attachedFile.name,
-      size: attachedFile.size,
-      type: attachedFile.type
-    } : null,
-    timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    channel: data.channel || 'generic',
-    riskScore: typeof data.riskScore === 'number' ? Math.min(Math.max(data.riskScore, 0), 100) : 50,
-    riskLevel: data.riskLevel || (data.riskScore >= 70 ? 'high' : data.riskScore >= 40 ? 'medium' : 'low'),
-    headline: data.headline || (data.riskScore >= 70 ? 'High Risk' : data.riskScore >= 40 ? 'Medium Risk' : 'Low Risk'),
-    summary: data.summary || 'Analysis completed.',
-    scamStage: data.scamStage || 'evaluation',
-    warningSigns: Array.isArray(data.warningSigns) ? data.warningSigns.map((w, idx) => ({
-      id: w.id || `sign-${idx}`,
-      title: w.title || 'Suspicious Pattern Detected',
-      explanation: w.explanation || 'Exercise caution regarding this characteristic.',
-      severity: w.severity || 'medium',
-      icon: w.icon || 'AlertTriangle',
-      evidence: w.evidence || '',
-      patternExplainer: w.patternExplainer || {
-        whatItIs: w.title || 'Security flag',
-        whyItMatters: w.explanation || 'Commonly exploited by malicious recruiters.',
-        realWorldTactic: 'Presents misleading opportunities.',
-        immediateAction: 'Verify via official company channels.'
-      }
-    })) : [],
-    recommendations: Array.isArray(data.recommendations) ? data.recommendations.map((r, idx) => ({
-      step: r.step || idx + 1,
-      title: r.title || 'Verify independently',
-      description: r.description || 'Check official public channels before taking action.',
-      links: r.links || []
-    })) : [
-      { step: 1, title: 'Verify the company', description: 'Check the official website and LinkedIn page.' },
-      { step: 2, title: 'Do not make any payment', description: 'Legitimate employers never ask for registration fees.' },
-      { step: 3, title: 'Report this offer', description: 'Share screenshots on the National Cybercrime Portal.' }
-    ],
-    verification: data.verification || {
-      status: 'unverified',
-      message: 'Company identity not independently verified.'
-    }
+    submittedText: data.extracted_text || submittedText,
+    attachedFile: attachedFile ? { name: attachedFile.name, size: attachedFile.size, type: attachedFile.type } : null,
+    channel: attachedFile ? (attachedFile.type?.startsWith('image/') ? 'screenshot' : 'document') : 'generic',
+    analysis_id: analysis.analysis_id,
+    risk_score: analysis.risk_score,
+    risk_level: analysis.risk_level,
+    indicators,
+    evidence,
+    scam_stage: analysis.scam_stage,
+    recommendations,
+    summary: analysis.summary,
+    disclaimer: analysis.disclaimer,
+    riskScore: analysis.risk_score,
+    riskLevel: analysis.risk_level,
+    scamStage: analysis.scam_stage,
+    warningSigns: toWarningSigns(indicators, evidence),
+    recommendationSteps: recommendations.map((recommendation, index) => ({ step: index + 1, title: recommendation, description: '' }))
   };
+}
+
+export async function checkJobOffer(rawText, attachedFile = null, apiBaseUrl) {
+  const validation = validateJobOfferInput(rawText, attachedFile);
+  if (!validation.isValid) {
+    throw new AnalysisApiError(validation.error);
+  }
+
+  const base = getApiBaseUrl(apiBaseUrl);
+  if (attachedFile) {
+    const form = new FormData();
+    form.append('file', attachedFile);
+    const data = await requestAnalysis('/scam/analyze/upload', {
+      apiBaseUrl: base,
+      fetchOptions: { method: 'POST', body: form }
+    }, true);
+    return normalizeApiResponse(data, validation.sanitizedText, attachedFile);
+  }
+
+  const data = await requestAnalysis('/scam/analyze', {
+    apiBaseUrl: base,
+    fetchOptions: {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        job_text: validation.sanitizedText,
+        job_url: null,
+        company_name: null,
+        contact_details: null
+      })
+    }
+  }, false);
+  return normalizeApiResponse(data, validation.sanitizedText);
 }

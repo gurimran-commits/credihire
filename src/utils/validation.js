@@ -2,27 +2,33 @@
  * Validation and sanitization utilities for CrediHire
  */
 
-export const MAX_INPUT_CHARS = 5000;
+export const MAX_INPUT_CHARS = 12_000;
 export const MIN_INPUT_CHARS = 10;
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const SUPPORTED_UPLOAD_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
+
+export function validateUploadFile(file) {
+  const name = typeof file?.name === 'string' ? file.name : '';
+  const extension = name.slice(name.lastIndexOf('.')).toLowerCase();
+  if (!SUPPORTED_UPLOAD_EXTENSIONS.includes(extension)) {
+    return { isValid: false, error: 'Only PDF, PNG, JPG, and JPEG files are supported.' };
+  }
+  if (typeof file?.size !== 'number' || file.size === 0) {
+    return { isValid: false, error: 'Please choose a non-empty file.' };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { isValid: false, error: 'This file exceeds the 10 MiB upload limit.' };
+  }
+  return { isValid: true, error: null };
+}
 
 export function validateJobOfferInput(text, attachedFile = null) {
   const rawString = typeof text === 'string' ? text : '';
   const trimmed = rawString.trim();
 
-  // If a document or file is attached, text is not strictly required
   if (attachedFile) {
-    const fileContent = attachedFile.text && attachedFile.text.trim().length > 0 
-      ? attachedFile.text.trim() 
-      : `[Uploaded Document: ${attachedFile.name} (${attachedFile.size || 'Attached'})]\nReviewing uploaded document for job scam, payment traps, and recruiter impersonation indicators.`;
-
-    const effectiveText = trimmed.length > 0 ? trimmed : fileContent;
-
-    return {
-      isValid: true,
-      error: null,
-      warnings: [],
-      sanitizedText: effectiveText.slice(0, MAX_INPUT_CHARS)
-    };
+    const fileValidation = validateUploadFile(attachedFile);
+    return { ...fileValidation, warnings: [], sanitizedText: trimmed };
   }
 
   if (trimmed.length === 0) {

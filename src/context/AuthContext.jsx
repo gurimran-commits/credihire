@@ -8,8 +8,13 @@ const STORAGE_KEY = 'credihire_user_session';
 const HISTORY_KEY_PREFIX = 'credihire_history_';
 
 const createDemoHistory = () => {
-  const taskScan = analyzeJobOfferLocally('Earn ₹5,000 daily by rating YouTube videos. Join our Telegram channel @DailyTasks and deposit ₹2,000 to unlock VIP payouts.');
-  const legitScan = analyzeJobOfferLocally('Dear Alex, We invite you for a 45-minute Google Meet technical interview for the Frontend Engineer position at Acme Corp. No fees or banking info required.');
+  const demoResult = (text) => ({
+    ...analyzeJobOfferLocally(text),
+    isDemo: true,
+    sourceNotice: 'Demo reference data — not a live scan.'
+  });
+  const taskScan = demoResult('Earn ₹5,000 daily by rating YouTube videos. Join our Telegram channel @DailyTasks and deposit ₹2,000 to unlock VIP payouts.');
+  const legitScan = demoResult('Dear Alex, We invite you for a 45-minute Google Meet technical interview for the Frontend Engineer position at Acme Corp. No fees or banking info required.');
 
   return [
     {

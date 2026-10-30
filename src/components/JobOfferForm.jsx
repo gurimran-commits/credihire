@@ -12,6 +12,7 @@ import {
   Check
 } from 'lucide-react';
 import { PRESET_EXAMPLES } from '../data/demoAnalysis.js';
+import { MAX_INPUT_CHARS, validateUploadFile } from '../utils/validation.js';
 
 export function JobOfferForm({
   inputText,
@@ -35,7 +36,7 @@ export function JobOfferForm({
   const setAttachedFile = propSetAttachedFile || setLocalFile;
 
   const charCount = inputText ? inputText.length : 0;
-  const maxChars = 5000;
+  const maxChars = MAX_INPUT_CHARS;
 
   const handleSubmit = (e) => {
     if (e && e.preventDefault) {
@@ -75,128 +76,16 @@ export function JobOfferForm({
     setTimeout(() => setUploadError(null), 5000);
   };
 
-  const extractTextFromBinary = (buffer) => {
-    try {
-      const bytes = new Uint8Array(buffer);
-      let currentRun = '';
-      const asciiRuns = [];
-      for (let i = 0; i < bytes.length; i++) {
-        const b = bytes[i];
-        if ((b >= 32 && b <= 126) || b === 10 || b === 13 || b === 9) {
-          currentRun += String.fromCharCode(b);
-        } else {
-          if (currentRun.trim().length > 3) {
-            asciiRuns.push(currentRun.trim());
-          }
-          currentRun = '';
-        }
-      }
-      if (currentRun.trim().length > 3) asciiRuns.push(currentRun.trim());
-      const filtered = asciiRuns.filter(r => 
-        !r.startsWith('%PDF') && 
-        !r.startsWith('obj') && 
-        !r.startsWith('endobj') && 
-        !r.includes('/Type') && 
-        !r.includes('/Filter') &&
-        !r.includes('/Font')
-      );
-      return filtered.join(' ').slice(0, maxChars);
-    } catch {
-      return '';
-    }
-  };
-
   const processSelectedFile = (file) => {
     setUploadError(null);
-
-    if (file.size > 5 * 1024 * 1024) {
-      showUploadError("File exceeds 5MB size limit. Please upload a smaller file or paste text directly.");
+    const validation = validateUploadFile(file);
+    if (!validation.isValid) {
+      showUploadError(validation.error);
       return;
     }
-
-    const sizeKb = (file.size / 1024).toFixed(1);
-    const fileNameLower = file.name.toLowerCase();
-
-    const hasTaskKeyword = fileNameLower.includes('task') || fileNameLower.includes('scam') || fileNameLower.includes('fake');
-    const hasFeeKeyword = fileNameLower.includes('fee') || fileNameLower.includes('payment') || fileNameLower.includes('deposit');
-
-    const finishFileUpload = (extractedText) => {
-      let finalContent = extractedText ? extractedText.trim() : '';
-      if (!finalContent || finalContent.length === 0) {
-        if (hasTaskKeyword) {
-          finalContent = `[Extracted from Document ${file.name}]:\nJob Title: Remote Task Evaluation Assistant. Complete YouTube video rating and online order tasks to earn ₹2,500 - ₹8,000 daily. Join Telegram group for instructions and wallet verification.`;
-        } else if (hasFeeKeyword) {
-          finalContent = `[Extracted from Document ${file.name}]:\nEmployment Offer Letter: Selected for Remote Support Executive role. Please remit ₹1,499 onboarding registration security deposit prior to training credentials dispatch.`;
-        } else {
-          finalContent = `[Uploaded Document: ${file.name} (${sizeKb} KB)]\nOffer letter, employment contract, or recruitment details attached for scam analysis.`;
-        }
-      }
-
-      const fileData = {
-        name: file.name,
-        size: `${sizeKb} KB`,
-        type: file.type || 'document',
-        rawFile: file,
-        text: finalContent
-      };
-
-      setAttachedFile(fileData);
-      setInputText(finalContent);
-      showUploadSuccess(`Document ${file.name} loaded and ready for analysis!`);
-
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-      }
-    };
-
-    // Text file reading
-    if (
-      file.type.includes('text') || 
-      fileNameLower.endsWith('.txt') || 
-      fileNameLower.endsWith('.eml') ||
-      fileNameLower.endsWith('.md') ||
-      fileNameLower.endsWith('.json') ||
-      fileNameLower.endsWith('.csv') ||
-      fileNameLower.endsWith('.py') ||
-      fileNameLower.endsWith('.js')
-    ) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result;
-        finishFileUpload(typeof content === 'string' ? content : '');
-      };
-      reader.onerror = () => {
-        finishFileUpload('');
-      };
-      reader.readAsText(file);
-    } else if (fileNameLower.endsWith('.pdf')) {
-      // PDF text extraction
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const buffer = event.target?.result;
-        const extracted = buffer ? extractTextFromBinary(buffer) : '';
-        finishFileUpload(extracted);
-      };
-      reader.onerror = () => {
-        finishFileUpload('');
-      };
-      reader.readAsArrayBuffer(file);
-    } else if (file.type.includes('image') || fileNameLower.endsWith('.png') || fileNameLower.endsWith('.jpg') || fileNameLower.endsWith('.jpeg')) {
-      const sampleScreenshotText = `[Extracted from screenshot ${file.name}]:\nHi! You've been selected for a remote data entry position. To complete your onboarding, please pay ₹1,499 as a registration fee. You'll receive the work details after payment.`;
-      finishFileUpload(sampleScreenshotText);
-    } else {
-      // Generic docs (.docx, .doc, etc.)
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const buffer = event.target?.result;
-        const extracted = buffer ? extractTextFromBinary(buffer) : '';
-        finishFileUpload(extracted);
-      };
-      reader.onerror = () => {
-        finishFileUpload('');
-      };
-      reader.readAsArrayBuffer(file);
-    }
+    setAttachedFile(file);
+    setInputText('');
+    showUploadSuccess(`Document ${file.name} is ready to upload for analysis.`);
   };
 
   const showUploadSuccess = (msg) => {
@@ -243,7 +132,7 @@ export function JobOfferForm({
         ref={fileInputRef}
         type="file"
         className="visually-hidden"
-        accept=".txt,.pdf,.docx,.doc,.png,.jpg,.jpeg,.eml"
+        accept=".pdf,.png,.jpg,.jpeg"
         onChange={handleFileChange}
         aria-label="Upload offer letter or screenshot file"
       />
@@ -286,7 +175,7 @@ export function JobOfferForm({
             type="button"
             className="input-icon-left-btn"
             onClick={triggerFileUpload}
-            title="Click to upload an offer letter, PDF, or screenshot (.txt, .pdf, .docx, .png, .jpg)"
+            title="Upload a PDF or screenshot (.pdf, .png, .jpg, .jpeg)"
             aria-label="Upload job offer document or screenshot"
           >
             <div className="position-relative">
@@ -305,7 +194,7 @@ export function JobOfferForm({
                 <div className="d-flex align-items-center gap-2 overflow-hidden">
                   <FileCheck size={16} className="text-success flex-shrink-0" />
                   <span className="file-name-text text-truncate fw-semibold" style={{ maxWidth: '240px' }}>{attachedFile.name}</span>
-                  <span className="text-white-50" style={{ fontSize: '0.72rem' }}>({attachedFile.size})</span>
+                  <span className="text-white-50" style={{ fontSize: '0.72rem' }}>({(attachedFile.size / 1024).toFixed(1)} KB)</span>
                   <button
                     type="button"
                     className="btn btn-sm text-white-50 p-0 border-0 bg-transparent ms-1 hover-danger"
@@ -340,7 +229,7 @@ export function JobOfferForm({
               id="job-offer-input"
               ref={textareaRef}
               className="offer-textarea"
-              placeholder={attachedFile ? "Document attached. You can add notes here, or click 'Check this document' to analyze directly..." : "Paste the job offer, recruiter message, or click the file icon to upload a document/screenshot..."}
+              placeholder={attachedFile ? "Document attached. Click ‘Check this document’ to upload it for analysis." : "Paste the job offer, recruiter message, or click the file icon to upload a document/screenshot..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}

@@ -31,7 +31,7 @@ export function WarningSigns({ warningSigns = [], onSelectWarning }) {
           <span>Key Warning Signs</span>
         </div>
         <div className="p-3 text-white-50" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '0.84rem' }}>
-          No definitive high-risk warning flags were triggered in this offer text. Continue to verify recruiter credentials.
+          The analysis did not return specific indicators for this submission.
         </div>
       </div>
     );

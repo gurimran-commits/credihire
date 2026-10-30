@@ -65,7 +65,7 @@ ${result.recommendations?.map(r => `${r.step || ''}. ${r.title}: ${r.description
           <div className="d-flex align-items-center gap-2">
             <span className={`results-badge-tag ${result.isDemo ? 'demo-mode' : 'live-mode'}`}>
               <Sparkles size={12} />
-              {result.isDemo ? 'Demonstration Mode (Visual Reference)' : 'Live AI Evaluation Result'}
+              {result.isDemo ? 'Demonstration Mode (Visual Reference)' : 'Live Analysis Result'}
             </span>
             {result.sourceNotice && (
               <span className="text-white-50 d-none d-md-inline" style={{ fontSize: '0.74rem' }}>
@@ -127,7 +127,7 @@ ${result.recommendations?.map(r => `${r.step || ''}. ${r.title}: ${r.description
           {/* Column 3: What You Should Do & Recovery Guide */}
           <div className="column-actions">
             <RecommendedActions
-              recommendations={result.recommendations}
+              recommendations={result.recommendationSteps || result.recommendations}
             />
 
             {/* Already Paid Money Mini-Card */}

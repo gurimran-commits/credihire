@@ -2,27 +2,7 @@ import React from 'react';
 import { ShieldCheck, ExternalLink, Phone } from 'lucide-react';
 
 export function RecommendedActions({ recommendations = [] }) {
-  const steps = recommendations.length > 0 ? recommendations : [
-    {
-      step: 1,
-      title: "Verify the company",
-      description: "Check the official website and LinkedIn page."
-    },
-    {
-      step: 2,
-      title: "Do not make any payment",
-      description: "Legitimate employers never ask for registration or onboarding fees."
-    },
-    {
-      step: 3,
-      title: "Report this offer",
-      description: "Share screenshots on the National Cybercrime Portal or helpline 1930",
-      links: [
-        { label: "National Cybercrime Portal", url: "https://cybercrime.gov.in/" },
-        { label: "helpline 1930", url: "tel:1930" }
-      ]
-    }
-  ];
+  const steps = recommendations;
 
   return (
     <div>
@@ -32,6 +12,7 @@ export function RecommendedActions({ recommendations = [] }) {
       </div>
 
       <div className="actions-steps-list">
+        {steps.length === 0 && <p className="text-white-50 mb-0">No specific recommendations were returned.</p>}
         {steps.map((item, idx) => {
           const stepNum = item.step || idx + 1;
           return (
