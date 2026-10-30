@@ -32,6 +32,8 @@ Set `CORS_ORIGINS` in the Render Dashboard to Keshav's exact HTTPS frontend orig
 
 Keshav should set the frontend build variable `VITE_API_BASE_URL` to `https://<render-service>.onrender.com/api/v1` (or the verified custom API domain). The frontend must not receive LLM credentials. Call `POST ${VITE_API_BASE_URL}/scam/analyze` with `job_text` and `POST ${VITE_API_BASE_URL}/chat/messages` with `message`; `analyze_message: true` optionally attaches deterministic analysis to the chat response. Handle `422` validation responses (`detail`, `errors`), `429` rate limiting, and `503` unavailable integrations without exposing raw errors to users.
 
+See `FRONTEND_INTEGRATION.md` for the local Vite base URL, request shapes, endpoint contracts, and UI error-handling rules.
+
 ## Production requirements
 
 This MVP has no authentication. Put it behind an authentication/authorization gateway before exposing non-public functionality. The rate limiter and chat session history are process-local; use a shared rate-limit store and durable, access-controlled session storage before running multiple instances. Keep an upstream request-body limit, configure trusted proxy/client-IP handling, and monitor provider failures. The app logs lifecycle and validation event metadata only; it does not log request bodies, credentials, or provider error details.

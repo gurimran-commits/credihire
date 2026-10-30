@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -14,5 +16,4 @@ def install_error_handlers(app: FastAPI) -> None:
         ]
         logger.warning("request_validation_failed path=%s issue_count=%s", _.url.path, len(errors))
         return JSONResponse(status_code=422, content={"detail": "Invalid request", "errors": errors})
-import logging
 
