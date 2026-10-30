@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Pattern, Tuple
 
-from backend.intelligence.indicators import (
+from .indicators import (
     INDICATOR_METADATA,
     IndicatorCategory,
     IndicatorResult,

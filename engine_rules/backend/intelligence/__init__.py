@@ -1,6 +1,6 @@
 """Scam Intelligence Engine - Indicator and Stage Detection."""
 
-from backend.intelligence.indicators import (
+from .indicators import (
     IndicatorCategory,
     IndicatorResult,
     ScamAnalysisResult,

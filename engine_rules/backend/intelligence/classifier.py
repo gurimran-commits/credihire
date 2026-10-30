@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from backend.intelligence.indicators import (
+from .indicators import (
     INDICATOR_METADATA,
     IndicatorCategory,
     IndicatorResult,
@@ -17,7 +17,7 @@ from backend.intelligence.indicators import (
     ScamAnalysisResult,
     ScamStage,
 )
-from backend.intelligence.rules import evaluate_rules
+from .rules import evaluate_rules
 
 # Indicator severity weights for legacy confidence scoring
 SEVERITY_WEIGHTS: Dict[str, float] = {
