@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credihire Scam Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="extension-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <img src="../assets/credihire-shield.svg" alt="Credihire" class="brand-logo">
+        <div class="brand-text">
+          <div class="brand-title">CREDIHIRE</div>
+          <div class="brand-subtitle">AI JOB SCAM SHIELD</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="backend-status-indicator" class="status-indicator checking" title="Checking backend status...">
+          <span class="status-dot"></span>
+          <span id="backend-status-label" class="status-label">Checking...</span>
+        </div>
+        <button id="btn-quick-settings" class="icon-btn" title="API Settings">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+            <path fill-rule="evenodd" d="M10.29 2.5a2 2 0 013.42 0l.48.83a2 2 0 001.73 1l.96.08a2 2 0 011.71 1.71l.08.96a2 2 0 001 1.73l.83.48a2 2 0 010 3.42l-.83.48a2 2 0 00-1 1.73l-.08.96a2 2 0 01-1.71 1.71l-.96.08a2 2 0 00-1.73 1l-.48.83a2 2 0 01-3.42 0l-.48-.83a2 2 0 00-1.73-1l-.96-.08a2 2 0 01-1.71-1.71l-.08-.96a2 2 0 00-1-1.73l-.83-.48a2 2 0 010-3.42l.83-.48a2 2 0 001-1.73l.08-.96a2 2 0 011.71-1.71l.96-.08a2 2 0 001.73-1l.48-.83z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="tab-job">Job Analysis</button>
+      <button class="nav-tab" data-tab="tab-url">URL Safety</button>
+      <button class="nav-tab" data-tab="tab-history">History</button>
+      <button class="nav-tab" data-tab="tab-settings">Settings</button>
+    </nav>
+
+    <!-- Main Content Body -->
+    <main class="main-content">
+      <!-- Alerts Banner (e.g. backend disconnected) -->
+      <div id="global-alert" class="alert-banner hidden">
+        <span id="global-alert-message" class="alert-text"></span>
+        <button id="global-alert-action" class="alert-btn">Action</button>
+      </div>
+
+      <!-- TAB 1: Job Scam Analysis -->
+      <section id="tab-job" class="tab-pane active">
+        <!-- Quick Action Toolbar -->
+        <div class="quick-tools">
+          <button id="btn-grab-selection" class="tool-btn" title="Pull text currently highlighted on active webpage">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h10a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/>
+            </svg>
+            Capture Selected Text
+          </button>
+          <button id="btn-extract-page" class="tool-btn" title="Analyze job content from current webpage (explicit action)">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v2h2a2 2 0 012 2v10a2 2 0 01-2 2H8a2 2 0 01-2-2v-2H4a2 2 0 01-2-2V4zm4 4v10h10V8H8zm-2-4v10h0V4h6V4H6z"/>
+            </svg>
+            Scan Current Webpage
+          </button>
+        </div>
+
+        <!-- Job Text Form -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="input-job-text">Job Offer / Recruiter Message Text</label>
+            <span id="job-char-count" class="char-count">0 / 12,000</span>
+          </div>
+          <textarea id="input-job-text" class="input-textarea" rows="6"
+            placeholder="Paste job details, task deposit instructions, recruiter WhatsApp message, or click 'Capture Selected Text'..."></textarea>
+        </div>
+
+        <!-- Collapsible Optional Parameters -->
+        <div class="accordion">
+          <button type="button" id="toggle-optional-fields" class="accordion-toggle">
+            <span>Optional Offer Details (URL, Company, Contact)</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div id="optional-fields-body" class="accordion-body hidden">
+            <div class="form-group">
+              <label for="input-job-url">Job Listing URL</label>
+              <input type="url" id="input-job-url" class="input-text" placeholder="https://example.com/jobs/123">
+            </div>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="input-company-name">Company Name</label>
+                <input type="text" id="input-company-name" class="input-text" placeholder="e.g. Acme Corp">
+              </div>
+              <div class="form-group flex-1">
+                <label for="input-contact-details">Recruiter Contact</label>
+                <input type="text" id="input-contact-details" class="input-text" placeholder="Email / Phone / Telegram">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="btn-analyze-job" class="primary-btn">
+          <span class="btn-spinner hidden"></span>
+          <span class="btn-text">Analyze for Scam Indicators</span>
+        </button>
+      </section>
+
+      <!-- TAB 2: URL Credibility Analysis -->
+      <section id="tab-url" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-description">
+            Evaluates website credibility, TLS/SSL certificates, hop-by-hop redirects, and recruitment brand impersonation without downloading web content.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="input-target-url">Recruitment Website URL</label>
+            <button id="btn-use-tab-url" class="text-link-btn">Use Active Tab URL</button>
+          </div>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-3-3a.75.75 0 011.06-1.06l1.72 1.72V4a.75.75 0 011.5 0v9.94l1.72-1.72a.75.75 0 111.06 1.06l-3 3zM3.75 13a.75.75 0 01.75.75v4.5c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-4.5a.75.75 0 011.5 0v4.5A2.25 2.25 0 0118.75 20.5H5.25A2.25 2.25 0 013 18.25v-4.5A.75.75 0 013.75 13z"/>
+            </svg>
+            <input type="url" id="input-target-url" class="input-text" placeholder="https://careers.company.com">
+          </div>
+        </div>
+
+        <button id="btn-analyze-url" class="primary-btn">
+          <span class="btn-spinner hidden"></span>
+          <span class="btn-text">Analyze URL Credibility</span>
+        </button>
+      </section>
+
+      <!-- TAB 3: History -->
+      <section id="tab-history" class="tab-pane">
+        <div class="history-header">
+          <span class="history-title">Recent Scam Audits</span>
+          <button id="btn-clear-history" class="text-link-btn danger">Clear History</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <!-- Populated dynamically -->
+        </div>
+        <div id="history-empty" class="empty-state hidden">
+          <div class="empty-icon">🛡️</div>
+          <div class="empty-text">No scans saved yet</div>
+          <div class="empty-subtext">Recent job and URL evaluations will appear here.</div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Settings -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="settings-card">
+          <h3 class="settings-title">Backend Configuration</h3>
+          <p class="settings-description">
+            Credihire API URL. Default points to local FastAPI development backend (`http://127.0.0.1:8000`).
+          </p>
+
+          <div class="form-group">
+            <label for="input-backend-url">Credihire API Base URL</label>
+            <input type="text" id="input-backend-url" class="input-text" value="http://127.0.0.1:8000">
+            <span class="helper-text">Extension will automatically target `/api/v1` routes.</span>
+          </div>
+
+          <div class="settings-actions">
+            <button id="btn-test-connection" class="secondary-btn">
+              <span class="btn-spinner hidden"></span>
+              Test Connection
+            </button>
+            <button id="btn-save-settings" class="primary-btn">Save Settings</button>
+          </div>
+
+          <div id="connection-test-result" class="connection-result hidden">
+            <!-- Test connection details rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- DYNAMIC STATE VIEWS -->
+
+      <!-- Loading State Overlay (Restored Cyber Radar with Cyan Glow) -->
+      <div id="loading-state" class="state-overlay hidden">
+        <div class="cyber-radar">
+          <div class="radar-circle"></div>
+          <div class="radar-scan"></div>
+          <img src="../assets/credihire-shield.svg" class="radar-shield" alt="Shield">
+        </div>
+        <div id="loading-status-text" class="loading-status">Evaluating scam indicators...</div>
+        <div class="loading-substatus">Analyzing linguistic cues, payment pressure & credential harvesting patterns</div>
+      </div>
+
+      <!-- Result View Overlay -->
+      <section id="result-view" class="result-container hidden">
+        <div class="result-header">
+          <button id="btn-back-to-input" class="back-btn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path fill-rule="evenodd" d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z"/>
+            </svg>
+            Back / New Scan
+          </button>
+          <div class="result-header-actions">
+            <button id="btn-copy-report" class="icon-btn-secondary" title="Copy report summary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M7.5 3.375c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 013.75 3.75v1.875H7.5V3.375z"/>
+                <path fill-rule="evenodd" d="M3.75 6.75A2.25 2.25 0 016 4.5h1.5v2.625A2.625 2.625 0 0010.125 9.75h4.875a.75.75 0 01.75.75v8.25A2.25 2.25 0 0113.5 21H6A2.25 2.25 0 013.75 18.75V6.75z"/>
+              </svg>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="result-scrollable-content" class="result-scroll">
+          <!-- 1. Risk Score Hero Card -->
+          <div id="risk-score-card" class="risk-hero-card">
+            <div class="risk-score-gauge">
+              <div id="risk-gauge-circle" class="gauge-ring">
+                <span id="risk-score-number" class="score-number">--</span>
+                <span class="score-max">/100</span>
+              </div>
+            </div>
+            <div class="risk-meta">
+              <div class="risk-badge-wrapper">
+                <span id="risk-level-badge" class="risk-badge level-unknown">CHECKING</span>
+                <span id="scam-stage-badge" class="stage-badge hidden">STAGE: UNKNOWN</span>
+              </div>
+              <div id="result-type-label" class="result-type">Deterministic Job Scam Assessment</div>
+            </div>
+          </div>
+
+          <!-- 2. Executive Summary Card -->
+          <div class="card result-card">
+            <div class="card-title">Executive Summary</div>
+            <div id="result-summary-text" class="card-content summary-text">--</div>
+          </div>
+
+          <!-- 3. Submitted Text with Evidence Highlighting -->
+          <div id="analyzed-text-section" class="card result-card hidden">
+            <div class="card-title-row">
+              <div class="card-title">Submitted Text & Evidence Highlights</div>
+              <div class="evidence-legend">
+                <span class="legend-chip chip-critical">Critical</span>
+                <span class="legend-chip chip-warning">Warning</span>
+              </div>
+            </div>
+            <div id="highlighted-text-container" class="highlighted-job-text"></div>
+            <div id="highlighted-text-empty" class="evidence-empty-note hidden">
+              No suspicious phrases or evidence quotes detected in the submitted text.
+            </div>
+          </div>
+
+          <!-- 4. Scam Indicators Section -->
+          <div id="indicators-section" class="card result-card">
+            <div class="card-title-row">
+              <div class="card-title">Detected Indicators</div>
+              <span id="indicators-count-badge" class="count-badge">0</span>
+            </div>
+            <div id="indicators-list" class="indicators-container">
+              <!-- Indicators items populated dynamically -->
+            </div>
+          </div>
+
+          <!-- 5. Grounded Evidence Section -->
+          <div id="evidence-section" class="card result-card hidden">
+            <div class="card-title-row">
+              <div class="card-title">Grounded Evidence Quotes</div>
+              <span id="evidence-count-badge" class="count-badge">0</span>
+            </div>
+            <div id="evidence-list" class="evidence-container">
+              <!-- Evidence items populated dynamically -->
+            </div>
+            <div id="evidence-empty-note" class="evidence-empty-note hidden">
+              No evidence quotes returned by the rule engine.
+            </div>
+          </div>
+
+          <!-- 6. URL Analysis Metrics (Conditional) -->
+          <div id="url-metrics-card" class="card result-card hidden">
+            <div class="card-title">URL & Network Verification</div>
+            <div class="url-metrics-grid">
+              <div class="metric-item">
+                <span class="metric-label">Target URL:</span>
+                <span id="url-metric-target" class="metric-value font-mono">--</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Final Destination:</span>
+                <span id="url-metric-final" class="metric-value font-mono">--</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">SSL Certificate:</span>
+                <span id="url-metric-ssl" class="metric-value">--</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Redirect Status:</span>
+                <span id="url-metric-redirect" class="metric-value">--</span>
+              </div>
+            </div>
+            <div id="redirect-chain-box" class="redirect-chain hidden">
+              <div class="chain-title">SSRF-Safe Redirect Chain:</div>
+              <div id="redirect-hops-list" class="hops-list"></div>
+            </div>
+          </div>
+
+          <!-- 7. AI Enrichment Section (Conditional on Groq) -->
+          <div id="ai-enrichment-section" class="card result-card ai-card hidden">
+            <div class="ai-badge-header">
+              <span class="ai-sparkle">✨</span>
+              <span class="ai-title">Groq AI Contextual Enrichment</span>
+            </div>
+            <div id="ai-summary-text" class="card-content">--</div>
+            <div id="ai-evidence-list" class="ai-evidence-box"></div>
+          </div>
+
+          <!-- 8. Actionable Recommendations (Positioned clearly below evidence) -->
+          <div id="recommendations-section" class="card result-card">
+            <div class="card-title">Safety Recommendations</div>
+            <ul id="recommendations-list" class="recommendations-list">
+              <!-- Recommendations list populated dynamically -->
+            </ul>
+          </div>
+
+          <!-- 9. Disclaimer Footer -->
+          <div class="disclaimer-box">
+            <span class="disclaimer-icon">ℹ️</span>
+            <span id="result-disclaimer-text" class="disclaimer-text">
+              Automated guidance only. Independently verify employers and requests for money or personal data.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Error State View -->
+      <section id="error-view" class="error-container hidden">
+        <div class="error-icon-box">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="#ef4444">
+            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"/>
+          </svg>
+        </div>
+        <div id="error-title" class="error-title">Backend Unavailable</div>
+        <div id="error-message" class="error-message">
+          Could not establish connection to the Credihire analysis service.
+        </div>
+        <div id="error-detail-box" class="error-detail hidden"></div>
+
+        <div class="error-actions">
+          <button id="btn-error-retry" class="primary-btn">Retry Analysis</button>
+          <button id="btn-error-settings" class="secondary-btn">Configure Backend URL</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="footer-dot"></span>
+        <span id="footer-connection-text">Credihire API v1</span>
+      </div>
+      <div class="footer-right">
+        <span class="version-label">v1.0.0</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../lib/config.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/api-client.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

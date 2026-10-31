@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credihire Scam Shield - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <!-- Header -->
+    <header class="options-header">
+      <div class="brand">
+        <img src="../assets/credihire-shield.svg" alt="Credihire" class="brand-logo">
+        <div class="brand-info">
+          <h1>CREDIHIRE SHIELD</h1>
+          <p>AI-Powered Job Scam & Recruitment Fraud Detection</p>
+        </div>
+      </div>
+      <div class="version-tag">Extension v1.0.0 (Manifest V3)</div>
+    </header>
+
+    <main class="options-content">
+      <!-- Section: Backend Configuration -->
+      <section class="config-card">
+        <h2>Backend API Connection</h2>
+        <p class="section-desc">
+          Configure the API endpoint used by the extension. For local development with FastAPI, use <code>http://127.0.0.1:8000</code>. For production, specify your secure HTTPS host.
+        </p>
+
+        <div class="form-group">
+          <label for="backend-url-input">Credihire API Base URL</label>
+          <div class="input-row">
+            <input type="text" id="backend-url-input" class="text-input" placeholder="http://127.0.0.1:8000">
+            <button id="btn-save-url" class="btn btn-primary">Save URL</button>
+            <button id="btn-reset-default" class="btn btn-secondary">Reset to Default</button>
+          </div>
+          <span class="field-hint">Note: Routes will be requested against <code>/api/v1</code>.</span>
+        </div>
+
+        <div class="test-box">
+          <button id="btn-test-backend" class="btn btn-accent">
+            <span class="spinner hidden"></span>
+            Test Backend Connectivity
+          </button>
+          <div id="test-status-box" class="status-box hidden">
+            <!-- Test results dynamically displayed here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Security & Privacy Guarantee -->
+      <section class="config-card">
+        <h2>Security & Privacy Guarantees</h2>
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-title">Zero Secret Exposure</div>
+            <div class="feature-text">No Groq API keys, tokens, or backend credentials are ever stored in or transmitted by this browser extension.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🛡️</div>
+            <div class="feature-title">Explicit User Action Only</div>
+            <div class="feature-text">Webpage content is never inspected or transmitted automatically. Content scripts only extract text when you explicitly click Scan or capture selected text.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-title">SSRF-Safe URL Analysis</div>
+            <div class="feature-text">URL safety checks evaluate SSL handshakes and redirect chains on the server without downloading remote executable page content.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="options-footer">
+      <div>Credihire Security Platform &bull; Compatible with Microsoft Edge and Google Chrome</div>
+    </footer>
+  </div>
+
+  <script src="../lib/config.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="../lib/api-client.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
