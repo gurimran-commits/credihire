@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   Sparkles,
   Search,
-  History
+  History,
+  Puzzle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -19,6 +20,7 @@ export function Navbar({
   onOpenScamTypes, 
   onOpenSafetyTips, 
   onOpenHistory,
+  onOpenExtensionGuide,
   onFocusInput, 
   onOpenAuth,
   activeSection: controlledActiveSection
@@ -135,7 +137,18 @@ export function Navbar({
         </div>
 
         {/* Right Actions: Auth / Account Option */}
-        <div className="nav-actions-right">
+        <div className="nav-actions-right d-flex align-items-center gap-2">
+          {/* Get Extension Button (Always visible on desktop) */}
+          <button
+            type="button"
+            className="btn-get-extension d-none d-sm-inline-flex align-items-center gap-2"
+            onClick={onOpenExtensionGuide}
+            title="Get Credihire Extension for Chrome & Edge"
+          >
+            <Puzzle size={15} />
+            <span>Get Extension</span>
+          </button>
+
           {/* User Logged Out: Show Sign In / Sign Up buttons */}
           {!user ? (
             <div className="d-none d-sm-flex align-items-center gap-2">
@@ -318,8 +331,19 @@ export function Navbar({
               </div>
             )}
 
+            {/* Mobile Get Extension Button */}
+            <button
+              type="button"
+              className="btn-get-extension-mobile d-flex align-items-center justify-content-center gap-2 py-2 px-3"
+              onClick={() => { setMobileMenuOpen(false); if (onOpenExtensionGuide) onOpenExtensionGuide(); }}
+            >
+              <Puzzle size={16} />
+              <span>Get Browser Extension</span>
+            </button>
+
             <a
               href="#home"
+
               className="text-white py-2 px-2 text-decoration-none fw-semibold"
               onClick={(e) => { e.preventDefault(); scrollToTop(); }}
             >

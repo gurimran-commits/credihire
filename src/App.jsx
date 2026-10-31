@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { useAnalysis } from './hooks/useAnalysis';
 import { Sparkles } from 'lucide-react';
 import { Chatbot } from './components/Chatbot';
+import { ExtensionGuide } from './components/ExtensionGuide';
 
 function AppContent() {
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
@@ -24,6 +25,7 @@ function AppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signin');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isExtensionGuideOpen, setIsExtensionGuideOpen] = useState(false);
 
   const { user, toastMessage, addScanToHistory } = useAuth();
 
@@ -57,6 +59,7 @@ function AppContent() {
     setIsSafetyTipsOpen(false);
     setIsAuthOpen(false);
     setIsHistoryOpen(false);
+    setIsExtensionGuideOpen(false);
   }, []);
 
   // Keyboard accessibility: ESC key closes all modals
@@ -71,7 +74,7 @@ function AppContent() {
   }, [closeAllModals]);
 
   // Lock body scroll when any modal is open
-  const isAnyModalOpen = isRecoveryOpen || !!selectedWarning || isHowItWorksOpen || isScamTypesOpen || isSafetyTipsOpen || isAuthOpen || isHistoryOpen;
+  const isAnyModalOpen = isRecoveryOpen || !!selectedWarning || isHowItWorksOpen || isScamTypesOpen || isSafetyTipsOpen || isAuthOpen || isHistoryOpen || isExtensionGuideOpen;
   useEffect(() => {
     if (isAnyModalOpen) {
       document.body.style.overflow = 'hidden';
@@ -214,6 +217,7 @@ function AppContent() {
         onOpenScamTypes={() => setIsScamTypesOpen(true)}
         onOpenSafetyTips={() => setIsSafetyTipsOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenExtensionGuide={() => setIsExtensionGuideOpen(true)}
         onFocusInput={focusInputArea}
         onOpenAuth={handleOpenAuth}
         activeSection={
@@ -301,6 +305,11 @@ function AppContent() {
       <SafetyTipsModal
         isOpen={isSafetyTipsOpen}
         onClose={() => setIsSafetyTipsOpen(false)}
+      />
+
+            <ExtensionGuide
+        isOpen={isExtensionGuideOpen}
+        onClose={() => setIsExtensionGuideOpen(false)}
       />
 
       <Chatbot analysisId={result?.analysis_id} />
